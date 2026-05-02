@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="theme-color" content="#070c14"/>
+<meta name="application-name" content="카드 컬렉션"/>
+<meta name="apple-mobile-web-app-title" content="카드 컬렉션"/>
+<title>⚡ 카드 컬렉션</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:#070c14;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;}
+input,select,textarea,button{font-family:inherit;}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
+::-webkit-scrollbar{display:none;}
+select{-webkit-appearance:none;appearance:none;}
+a{text-decoration:none;}
+#app{display:flex;flex-direction:column;min-height:100vh;max-width:430px;margin:0 auto;}
+#header{position:sticky;top:0;z-index:20;background:rgba(7,12,20,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #111827;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.logo{width:28px;height:28px;border-radius:8px;background:#f59e0b;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+h1{font-size:14px;font-weight:700;flex-shrink:0;}
+.hdr-right{display:flex;gap:6px;}
+.btn-sm{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:6px 8px;font-size:11px;color:#9ca3af;cursor:pointer;white-space:nowrap;}
+.btn-sm:active{background:#1f2937;}
+#content{flex:1;overflow-y:auto;padding-bottom:80px;}
+#bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(7,12,20,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid #111827;display:flex;z-index:20;padding-bottom:env(safe-area-inset-bottom);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 0;background:none;border:none;cursor:pointer;position:relative;}
+.nav-icon{font-size:18px;}
+.nav-btn.active .nav-icon{filter:none;}
+#nav-add .nav-label{color:#9ca3af;}
+#nav-add.active .nav-label{color:#f59e0b;}
+#nav-add span:first-child{transition:color .15s,opacity .15s;}
+#nav-add.active span:first-child{color:#f59e0b;opacity:1;}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.05em;color:#4b5563;}
+.nav-btn.active .nav-label{color:#f59e0b;}
+.nav-bar{position:absolute;bottom:0;width:32px;height:2px;background:#f59e0b;border-radius:2px 2px 0 0;display:none;}
+.nav-btn.active .nav-bar{display:block;}
+.inp{width:100%;background:#111827;border-radius:12px;padding:12px 14px;font-size:14px;color:#fff;border:1px solid #1f2937;outline:none;transition:border-color .15s;display:block;}
+.inp:focus{border-color:#f59e0b;}
+.inp::placeholder{color:#4b5563;}
+textarea.inp{resize:none;}
+.inp-sm{background:#0d1117;border-radius:10px;padding:9px 12px;font-size:13px;color:#fff;border:1px solid #1f2937;outline:none;width:100%;}
+.inp-sm:focus{border-color:#f59e0b;}
+.inp-sm::placeholder{color:#4b5563;}
+.lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;}
+.field{display:flex;flex-direction:column;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn-gold{background:#f59e0b;color:#000;font-weight:700;border:none;border-radius:16px;padding:14px;width:100%;font-size:14px;cursor:pointer;}
+.btn-gold:active{opacity:.85;}
+.btn-ghost{background:none;border:1px solid #1f2937;border-radius:16px;padding:12px;width:100%;font-size:14px;color:#9ca3af;cursor:pointer;}
+.btn-ghost:active{background:#111827;}
+.btn-danger{background:none;border:1px solid #7f1d1d;border-radius:16px;padding:12px;width:100%;font-size:14px;color:#f87171;cursor:pointer;}
+.btn-icon{background:none;border:none;cursor:pointer;padding:4px;font-size:15px;line-height:1;}
+.search-wrap{padding:12px 16px 0;}
+.search-box{position:relative;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+.search-inp{width:100%;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:10px 14px 10px 36px;font-size:14px;color:#fff;outline:none;-webkit-appearance:none;}
+.search-inp:focus{border-color:#f59e0b;}
+.search-inp::placeholder{color:#4b5563;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 16px 0;}
+.stat-card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:10px 6px;text-align:center;}
+.stat-label{font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.stat-value{font-size:10px;font-weight:700;color:#fff;line-height:1.3;}
+.stat-value.gold{color:#f59e0b;}
+.stat-value.green{color:#34d399;}
+.filter-row{display:flex;align-items:center;gap:8px;padding:10px 16px 0;}
+.sort-select{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:6px 28px 6px 10px;font-size:12px;color:#fff;outline:none;cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;flex-shrink:0;}
+.sort-dir-btn{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:6px 10px;font-size:13px;color:#9ca3af;cursor:pointer;flex-shrink:0;}
+.status-chips{display:flex;gap:4px;overflow-x:auto;}
+.status-chips::-webkit-scrollbar{display:none;}
+.chip{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #1f2937;background:#111827;color:#6b7280;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.chip.active{background:#f59e0b;color:#000;border-color:#f59e0b;}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;}
+.section-label{font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;}
+.grid-toggle{display:flex;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:2px;gap:2px;}
+.grid-btn{padding:5px 10px;font-size:11px;font-weight:600;border:none;background:transparent;color:#6b7280;border-radius:10px;cursor:pointer;}
+.grid-btn.active{background:#f59e0b;color:#000;}
+.card-grid{display:grid;gap:10px;padding:0 16px 16px;}
+.card-thumb{background:#111827;border:1px solid #1f2937;border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .1s;}
+.card-thumb:active{transform:scale(.93);}
+.card-thumb.sold-card{opacity:.8;}
+.thumb-img{width:100%;aspect-ratio:3/4;background:#070c14;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+.thumb-img img{width:100%;height:100%;object-fit:contain;}
+.grade-tag{position:absolute;top:5px;right:5px;border-radius:5px;padding:2px 5px;text-align:center;min-width:18px;}
+.grade-num{font-size:8px;font-weight:800;display:block;line-height:1.2;}
+.sold-corner{position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:22px 22px 0 0;border-color:#22c55e transparent transparent transparent;}
+/* trend badge on thumbnail */
+.trend-badge{position:absolute;bottom:5px;left:5px;border-radius:5px;padding:2px 5px;font-size:9px;font-weight:700;display:flex;align-items:center;gap:2px;}
+.trend-up{background:rgba(239,68,68,.70);border:1px solid rgba(239,68,68,.9);color:#fff;}
+.trend-down{background:rgba(59,130,246,.70);border:1px solid rgba(59,130,246,.9);color:#fff;}
+.thumb-info{padding:6px 8px;}
+.thumb-name{font-size:10px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.thumb-price{font-size:9px;color:#6b7280;margin-top:2px;}
+.empty-state{display:flex;flex-direction:column;align-items:center;padding:80px 20px;text-align:center;}
+.empty-icon{font-size:56px;opacity:.15;margin-bottom:16px;}
+.empty-state p{font-size:14px;color:#374151;}
+.empty-sub{font-size:12px;color:#1f2937;margin-top:4px;}
+.form-wrap{padding:20px;display:flex;flex-direction:column;gap:18px;}
+.form-title{font-size:10px;color:#f59e0b;font-weight:700;letter-spacing:.15em;text-transform:uppercase;}
+.img-upload{width:100%;height:200px;background:#111827;border-radius:16px;border:2px dashed #1f2937;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;}
+.img-upload:active{border-color:#f59e0b;}
+/* ── Image Editor ── */
+#img-editor-overlay{display:none;position:fixed;inset:0;z-index:400;background:#000;flex-direction:column;}
+.ie-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0a0a0a;flex-shrink:0;}
+.ie-title{font-size:14px;font-weight:700;color:#fff;}
+.ie-tools{display:flex;background:#111827;border:1px solid #1f2937;border-radius:10px;padding:3px;gap:3px;}
+.ie-tool{padding:6px 14px;font-size:12px;font-weight:700;border:none;border-radius:7px;cursor:pointer;background:transparent;color:#6b7280;}
+.ie-tool.active{background:#f59e0b;color:#000;}
+.ie-tool.active.blur{background:#a78bfa;color:#000;}
+.ie-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;touch-action:none;}
+#ie-canvas{display:block;max-width:100%;max-height:100%;cursor:crosshair;}
+.ie-bottom{background:#0a0a0a;padding:12px 16px;flex-shrink:0;}
+.ie-blur-ctrl{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.ie-blur-label{font-size:11px;color:#9ca3af;white-space:nowrap;}
+.ie-blur-slider{flex:1;accent-color:#a78bfa;}
+.ie-blur-hint{font-size:10px;color:#4b5563;text-align:center;margin-bottom:10px;line-height:1.5;}
+.ie-actions{display:flex;gap:10px;}
+.ie-btn{flex:1;padding:11px;border:1px solid #1f2937;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:#111827;color:#9ca3af;}
+.ie-btn.confirm{background:#f59e0b;color:#000;border-color:#f59e0b;}
+.ie-btn.danger{color:#f87171;border-color:#7f1d1d;}
+.img-upload img{width:100%;height:100%;object-fit:contain;}
+.img-placeholder{text-align:center;user-select:none;}
+.img-icon{font-size:44px;opacity:.3;}
+.img-placeholder p{font-size:12px;color:#4b5563;margin-top:8px;}
+.img-change-btn{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.75);border:1px solid #374151;border-radius:8px;padding:4px 10px;font-size:10px;color:#fff;cursor:pointer;z-index:2;}
+.psa-preview{display:flex;align-items:center;gap:8px;font-size:11px;color:#60a5fa;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:10px 14px;overflow:hidden;}
+.psa-preview span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Dupe warning */
+.dupe-warn{display:flex;align-items:flex-start;gap:8px;background:#1f1208;border:1px solid #92400e;border-radius:12px;padding:10px 14px;}
+.dupe-warn p{font-size:12px;color:#fbbf24;line-height:1.4;}
+.tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.tag-chip{background:#1f2937;border-radius:20px;padding:3px 10px;font-size:11px;color:#9ca3af;}
+#modal-overlay{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;justify-content:flex-end;}
+.modal-dimmer{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+#modal-sheet{position:relative;background:#0a0f1a;border-radius:24px 24px 0 0;max-height:93vh;overflow-y:auto;z-index:10;border-top:1px solid #1f2937;padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+.modal-handle{display:flex;justify-content:center;padding:12px 0 4px;}
+.handle-bar{width:40px;height:4px;background:#2d3748;border-radius:2px;}
+#modal-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;position:sticky;top:0;background:#0a0f1a;z-index:5;border-bottom:1px solid #111827;}
+#modal-title{font-size:14px;font-weight:600;color:#fff;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .15s;}
+#modal-title:active{background:#1f2937;}
+.copy-hint{font-size:9px;color:#6b7280;margin-left:4px;}
+#modal-content{padding:16px 20px 0;}
+.modal-img-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:20px;}
+.modal-img-inner{position:relative;width:160px;height:220px;border-radius:16px;overflow:hidden;background:#070c14;border:1px solid #1f2937;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.modal-img-inner img{width:100%;height:100%;object-fit:contain;}
+.modal-img-emoji{font-size:52px;opacity:.3;}
+.modal-card-grade{position:absolute;top:6px;right:6px;border-radius:6px;padding:3px 6px;text-align:center;z-index:2;}
+.modal-card-grade .g-num{font-size:10px;font-weight:800;display:block;line-height:1.2;}
+.modal-card-grade .g-desc{font-size:8px;font-weight:600;display:block;opacity:.85;line-height:1.1;margin-top:1px;}
+.modal-card-sold{position:absolute;bottom:0;left:0;right:0;background:rgba(34,197,94,.88);color:#fff;font-size:10px;font-weight:700;text-align:center;padding:5px 4px;letter-spacing:.05em;z-index:2;}
+.btn-change-img{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:6px 14px;font-size:11px;color:#9ca3af;cursor:pointer;}
+.section-tabs{display:flex;background:#111827;border:1px solid #1f2937;border-radius:16px;padding:4px;margin-bottom:20px;gap:3px;}
+.tab-btn{flex:1;padding:7px 4px;font-size:11px;font-weight:600;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#6b7280;}
+.tab-btn.active{background:#f59e0b;color:#000;}
+.info-rows{display:flex;flex-direction:column;}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:11px 0;border-bottom:1px solid #0d1117;}
+.info-row.col{flex-direction:column;gap:6px;}
+.info-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;}
+.info-val{font-size:13px;color:#fff;text-align:right;}
+.info-row.col .info-val{text-align:left;white-space:pre-wrap;line-height:1.5;}
+.diff.up{color:#34d399;font-size:10px;margin-left:4px;}
+.diff.down{color:#f87171;font-size:10px;margin-left:4px;}
+.psa-btn{display:flex;align-items:center;justify-content:space-between;background:#0d1f3c;border:1px solid #1e3a5f;border-radius:16px;padding:12px 16px;text-decoration:none;margin-top:8px;}
+.dup-badge{background:#1f2937;border:1px solid #374151;border-radius:10px;padding:4px 10px;font-size:11px;color:#9ca3af;display:inline-flex;align-items:center;gap:4px;margin-top:8px;}
+.chart-wrap{margin:0 -8px 10px;overflow:hidden;}
+.chart-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.chart-bar-label{font-size:10px;color:#6b7280;}
+.toggle-label-btn{background:#111827;border:1px solid #1f2937;border-radius:8px;padding:4px 10px;font-size:10px;color:#6b7280;cursor:pointer;}
+.toggle-label-btn.on{border-color:#f59e0b;color:#f59e0b;}
+.market-links{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.market-btn{display:flex;align-items:center;justify-content:center;gap:4px;background:#111827;border:1px solid #1f2937;border-radius:10px;padding:7px 10px;font-size:11px;color:#9ca3af;text-decoration:none;white-space:nowrap;}
+.market-btn:active{background:#1f2937;}
+.price-list{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:12px;}
+.price-item{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:10px 12px;}
+.price-item-row{display:flex;justify-content:space-between;align-items:flex-start;}
+.price-item-left p{line-height:1.3;}
+.price-date{font-size:10px;color:#6b7280;}
+.price-val{font-size:14px;font-weight:700;color:#f59e0b;}
+.price-memo-text{font-size:10px;color:#6b7280;margin-top:3px;font-style:italic;}
+.price-src-btn{display:inline-flex;align-items:center;gap:4px;background:#0d1117;border:1px solid #1f2937;border-radius:6px;padding:3px 8px;font-size:10px;color:#60a5fa;text-decoration:none;margin-top:4px;max-width:100%;overflow:hidden;}
+.price-src-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
+.price-url-row{display:flex;gap:6px;align-items:center;margin-top:4px;}
+.price-url-inp{flex:1;}
+.price-actions{display:flex;gap:4px;flex-shrink:0;margin-top:2px;}
+.price-form-box{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.price-form-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.price-form-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.price-edit-section{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #1f2937;}
+.empty-price{text-align:center;font-size:12px;color:#374151;padding:32px 0;}
+.sale-section{display:flex;flex-direction:column;gap:14px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:#111827;border:1px solid #1f2937;border-radius:14px;padding:14px 16px;}
+.toggle-label{font-size:14px;color:#fff;}
+.toggle-sub{font-size:10px;color:#6b7280;margin-top:2px;}
+.toggle-btn{width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;flex-shrink:0;}
+.toggle-btn.on{background:#22c55e;}
+.toggle-btn.off{background:#374151;}
+.toggle-knob{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;}
+.toggle-btn.on .toggle-knob{left:23px;}
+.toggle-btn.off .toggle-knob{left:3px;}
+.profit-card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:16px;text-align:center;}
+.profit-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.profit-val{font-size:22px;font-weight:800;}
+.profit-val.pos{color:#34d399;}
+.profit-val.neg{color:#f87171;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.tag-badge{background:#1f2937;border-radius:20px;padding:3px 9px;font-size:11px;color:#9ca3af;}
+.modal-edit-fields{display:flex;flex-direction:column;gap:14px;}
+.edit-bar{display:flex;gap:10px;align-items:center;}
+.btn-edit{background:none;border:none;font-size:14px;color:#f59e0b;cursor:pointer;padding:4px;}
+.btn-save{background:none;border:none;font-size:14px;color:#f59e0b;font-weight:700;cursor:pointer;padding:4px;}
+.btn-cancel-e{background:none;border:none;font-size:12px;color:#6b7280;cursor:pointer;padding:4px;}
+.btn-close{background:none;border:none;font-size:14px;color:#6b7280;cursor:pointer;padding:4px;}
+#settings-overlay{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;justify-content:flex-end;}
+#settings-sheet{position:relative;background:#0a0f1a;border-radius:24px 24px 0 0;padding:20px;padding-bottom:calc(24px + env(safe-area-inset-bottom));z-index:10;border-top:1px solid #1f2937;}
+.settings-title{font-size:12px;color:#f59e0b;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;}
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #111827;}
+.settings-item:last-child{border-bottom:none;}
+.settings-item-label{font-size:14px;color:#fff;}
+.settings-item-sub{font-size:11px;color:#6b7280;margin-top:2px;}
+/* AI search styles */
+#import-modal{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;justify-content:flex-end;}
+#import-sheet{position:relative;background:#0a0f1a;border-radius:24px 24px 0 0;max-height:88vh;display:flex;flex-direction:column;z-index:10;border-top:1px solid #1f2937;padding-bottom:env(safe-area-inset-bottom);}
+.import-header{padding:20px 20px 12px;border-bottom:1px solid #111827;}
+.import-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.import-sub{font-size:11px;color:#6b7280;}
+.import-actions-row{display:flex;gap:8px;padding:10px 20px;border-bottom:1px solid #111827;flex-shrink:0;}
+.dest-group{display:flex;background:#0d1117;border:1px solid #1f2937;border-radius:10px;padding:2px;gap:2px;flex-shrink:0;}
+.dest-btn{padding:5px 8px;font-size:10px;font-weight:700;border:none;border-radius:8px;cursor:pointer;background:transparent;color:#4b5563;transition:all .15s;}
+.dest-btn.main-active{background:#f59e0b;color:#000;}
+.dest-btn.dream-active{background:#a78bfa;color:#000;}
+.dest-btn.skip-active{background:#374151;color:#9ca3af;}
+.import-list{flex:1;overflow-y:auto;padding:10px 20px;}
+.import-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #111827;}
+.import-item:last-child{border-bottom:none;}
+.import-cb{width:18px;height:18px;accent-color:#f59e0b;cursor:pointer;flex-shrink:0;}
+.import-item-img{width:36px;height:48px;border-radius:6px;background:#111827;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.import-item-img img{width:100%;height:100%;object-fit:contain;}
+.import-item-info{flex:1;min-width:0;}
+.import-item-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.import-item-sub{font-size:10px;color:#6b7280;margin-top:2px;}
+.import-item-warn{font-size:10px;color:#fbbf24;margin-top:2px;}
+.import-footer{display:flex;gap:8px;padding:12px 20px;border-top:1px solid #111827;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <div class="logo">⚡</div>
+      <h1>카드 컬렉션</h1>
+    </div>
+    <div class="hdr-right">
+      <button class="btn-sm" id="btn-export">내보내기</button>
+      <button class="btn-sm" id="btn-import-trigger">불러오기</button>
+      <button class="btn-sm" id="btn-settings">⚙️</button>
+      <input id="import-file-input" type="file" accept=".json" style="display:none"/>
+    </div>
+  </header>
+  <main id="content"></main>
+  <nav id="bottom-nav">
+    <button class="nav-btn active" id="nav-collection" data-tab="collection"><span class="nav-icon">📦</span><span class="nav-label">컬렉션</span><span class="nav-bar"></span></button>
+    <button class="nav-btn" id="nav-add" data-tab="add">
+      <span style="font-size:28px;color:#fff;line-height:1;font-weight:200;opacity:.9">+</span>
+      <span class="nav-label">카드 추가</span>
+      <span class="nav-bar"></span>
+    </button>
+  </nav>
+  <div id="modal-overlay">
+    <div class="modal-dimmer" id="modal-bg"></div>
+    <div id="modal-sheet">
+      <div class="modal-handle"><div class="handle-bar"></div></div>
+      <div id="modal-topbar">
+        <button class="btn-close" id="modal-close-btn">닫기</button>
+        <span id="modal-title"></span>
+        <div id="modal-action-area"></div>
+      </div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+  <div id="settings-overlay">
+    <div class="modal-dimmer" id="settings-bg"></div>
+    <div id="settings-sheet">
+      <div class="modal-handle"><div class="handle-bar"></div></div>
+      <p class="settings-title">⚙️ 도구 & 설정</p>
+      <div class="settings-item"><div><p class="settings-item-label">샘플 카드 추가</p><p class="settings-item-sub">테스트용 샘플 카드 5장을 추가해요</p></div><button class="btn-sm" id="btn-add-sample">추가하기</button></div>
+      <div class="settings-item"><div><p class="settings-item-label" style="color:#f87171">전체 초기화</p><p class="settings-item-sub">모든 카드 데이터를 삭제해요</p></div><button class="btn-sm" id="btn-reset-all" style="border-color:#7f1d1d;color:#f87171">초기화</button></div>
+    </div>
+  </div>
+  <div id="import-modal">
+    <div class="modal-dimmer" id="import-modal-bg"></div>
+    <div id="import-sheet">
+      <div class="modal-handle"><div class="handle-bar"></div></div>
+      <div class="import-header"><p class="import-title">불러올 카드 선택</p><p class="import-sub" id="import-sub-text"></p></div>
+      <div class="import-actions-row">
+        <button class="btn-sm" id="btn-import-all-main">전체 📦컬렉션</button>
+        <button class="btn-sm" id="btn-import-all-dream" style="border-color:#4c1d95;color:#a78bfa">전체 ⭐드림</button>
+        <button class="btn-sm" id="btn-import-none">전체 제외</button>
+      </div>
+      <div class="import-list" id="import-list"></div>
+      <div class="import-footer">
+        <button class="btn-ghost" id="btn-import-cancel" style="flex:1;padding:11px">취소</button>
+        <button class="btn-gold" id="btn-import-merge" style="flex:1;padding:11px">추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Grade data ───────────────────────────────────────────────────────────────
+var GRADES_BY_CO={
+  PSA:[
+    {v:'10',  label:'PSA 10 — Gem Mint',       short:'GEM',   num:10},
+    {v:'9',   label:'PSA 9 — Mint',            short:'MINT',  num:9},
+    {v:'8.5', label:'PSA 8.5 — NM‑Mint+',      short:'NM+',   num:8.5},
+    {v:'8',   label:'PSA 8 — NM‑Mint',         short:'NM-MT', num:8},
+    {v:'7.5', label:'PSA 7.5 — Near Mint+',    short:'NM+',   num:7.5},
+    {v:'7',   label:'PSA 7 — Near Mint',       short:'NM',    num:7},
+    {v:'6.5', label:'PSA 6.5 — EX‑Mint+',     short:'EX+',   num:6.5},
+    {v:'6',   label:'PSA 6 — EX‑Mint',        short:'EX-MT', num:6},
+    {v:'5.5', label:'PSA 5.5 — Excellent+',   short:'EX+',   num:5.5},
+    {v:'5',   label:'PSA 5 — Excellent',      short:'EX',    num:5},
+    {v:'4.5', label:'PSA 4.5 — VG‑EX+',       short:'VG+',   num:4.5},
+    {v:'4',   label:'PSA 4 — VG‑Excellent',   short:'VG-EX', num:4},
+    {v:'3.5', label:'PSA 3.5 — Very Good+',   short:'VG+',   num:3.5},
+    {v:'3',   label:'PSA 3 — Very Good',      short:'VG',    num:3},
+    {v:'2.5', label:'PSA 2.5 — Good+',        short:'GD+',   num:2.5},
+    {v:'2',   label:'PSA 2 — Good',           short:'GD',    num:2},
+    {v:'1.5', label:'PSA 1.5 — Fair',         short:'FR',    num:1.5},
+    {v:'1',   label:'PSA 1 — Poor',           short:'PR',    num:1},
+    {v:'A',   label:'PSA A — Authentic',      short:'AUTH',  num:0.5},
+    {v:'RAW', label:'RAW (미채점)',              short:'RAW',   num:-1}
+  ],
+  BGS:[
+    {v:'10BL',label:'BGS 10 — Black Label',    short:'BLACK', num:10.5},
+    {v:'10',  label:'BGS 10 — Pristine',        short:'PRIS',  num:10},
+    {v:'9.5', label:'BGS 9.5 — Gem Mint',       short:'GEM',   num:9.5},
+    {v:'9',   label:'BGS 9 — Mint',             short:'MINT',  num:9},
+    {v:'8.5', label:'BGS 8.5 — NM‑Mint+',       short:'NM+',   num:8.5},
+    {v:'8',   label:'BGS 8 — NM‑Mint',          short:'NM-MT', num:8},
+    {v:'7.5', label:'BGS 7.5 — Near Mint+',     short:'NM+',   num:7.5},
+    {v:'7',   label:'BGS 7 — Near Mint',        short:'NM',    num:7},
+    {v:'6.5', label:'BGS 6.5 — EX‑Mint+',      short:'EX+',   num:6.5},
+    {v:'6',   label:'BGS 6 — EX‑Mint',         short:'EX-MT', num:6},
+    {v:'5.5', label:'BGS 5.5 — Excellent+',    short:'EX+',   num:5.5},
+    {v:'5',   label:'BGS 5 — Excellent',       short:'EX',    num:5},
+    {v:'4.5', label:'BGS 4.5 — VG‑EX+',        short:'VG+',   num:4.5},
+    {v:'4',   label:'BGS 4 — VG‑Excellent',    short:'VG-EX', num:4},
+    {v:'3.5', label:'BGS 3.5 — Very Good+',    short:'VG+',   num:3.5},
+    {v:'3',   label:'BGS 3 — Very Good',       short:'VG',    num:3},
+    {v:'2.5', label:'BGS 2.5 — Good+',         short:'GD+',   num:2.5},
+    {v:'2',   label:'BGS 2 — Good',            short:'GD',    num:2},
+    {v:'1.5', label:'BGS 1.5 — Fair',          short:'FR',    num:1.5},
+    {v:'1',   label:'BGS 1 — Poor',            short:'PR',    num:1},
+    {v:'A',   label:'BGS A — Authentic',       short:'AUTH',  num:0.5},
+    {v:'RAW', label:'RAW (미채점)',              short:'RAW',   num:-1}
+  ],
+  BRG:[
+    {v:'10',  label:'BRG 10 — Pristine Perfect',short:'PRIS', num:10},
+    {v:'9.5', label:'BRG 9.5 — Gem Mint',       short:'GEM',  num:9.5},
+    {v:'9',   label:'BRG 9 — Mint',             short:'MINT', num:9},
+    {v:'8.5', label:'BRG 8.5 — Near Mint+',     short:'NM+',  num:8.5},
+    {v:'8',   label:'BRG 8 — Near Mint',        short:'NM',   num:8},
+    {v:'7.5', label:'BRG 7.5 — Excellent+',     short:'EX+',  num:7.5},
+    {v:'7',   label:'BRG 7 — Excellent',        short:'EX',   num:7},
+    {v:'6',   label:'BRG 6 — Very Good',        short:'VG',   num:6},
+    {v:'5',   label:'BRG 5 — Good',             short:'GD',   num:5},
+    {v:'4',   label:'BRG 4 — Fair',             short:'FR',   num:4},
+    {v:'3',   label:'BRG 3 — Poor',             short:'PR',   num:3},
+    {v:'RAW', label:'RAW (미채점)',               short:'RAW',  num:-1}
+  ]
+};
+// Keep GRADES as PSA for backward compat
+var GRADES=GRADES_BY_CO.PSA;
+function getGrades(co){return GRADES_BY_CO[co]||GRADES_BY_CO.PSA;}
+function gInfo(v,co){var gr=getGrades(co);for(var i=0;i<gr.length;i++)if(gr[i].v===v)return gr[i];return null;}
+function gNum(v,co){var g=gInfo(v,co);return g?g.num:-99;}
+function gShort(v,co){var g=gInfo(v,co);return g?g.short:'';}
+function gNumLabel(v){if(!v)return'';if(v==='RAW')return'RAW';if(v==='A')return'A';if(v==='10BL')return'BL';return v;}
+function certUrl(card){
+  var co=card.gradingCo||'PSA';var code=card.psaCode||'';if(!code)return null;
+  if(co==='BGS')return'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+code;
+  if(co==='BRG')return'https://break.co.kr/certification/'+code;
+  return'https://www.psacard.com/cert/'+code+'/psa';
+}
+function certLabel(co){
+  if(co==='BGS')return'BGS 인증서 확인';
+  if(co==='BRG')return'BRG 인증서 확인';
+  return'PSA 인증서 확인';
+}
+
+
+// ─── State ────────────────────────────────────────────────────────────────────
+var S={cards:[],tab:'collection',cols:2,cardId:null,editing:false,section:'info',addPrice:false,editPriceIdx:null,draft:null,search:'',sortBy:'createdAt',sortDir:'desc',filterSold:'all',chartMode:'labels',dreamView:false,dreamConvert:false,convertDraft:null};
+var importBuffer=[];
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+function saveData(){try{localStorage.setItem('cards-v5',JSON.stringify(S.cards));}catch(e){alert('저장 실패');}}
+function loadData(){try{S.cards=JSON.parse(localStorage.getItem('cards-v5')||'[]');}catch(e){S.cards=[];}}
+function saveMeta(){try{localStorage.setItem('cards-meta5',JSON.stringify({cols:S.cols,sortBy:S.sortBy,sortDir:S.sortDir,chartMode:S.chartMode,dreamView:S.dreamView}));}catch(e){}}
+function loadMeta(){try{var m=JSON.parse(localStorage.getItem('cards-meta5')||'{}');S.cols=m.cols||2;S.sortBy=m.sortBy||'createdAt';S.sortDir=m.sortDir||'desc';S.chartMode=m.chartMode||'labels';S.dreamView=!!m.dreamView;}catch(e){}}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function fmtW(n){var v=parseFloat(n);if(isNaN(v)||v===0)return'-';return'₩'+Math.round(v).toLocaleString('ko-KR');}
+function fmtDt(s){return new Date(s).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtDate(s){return new Date(s).toLocaleDateString('ko-KR',{month:'short',day:'numeric'});}
+function fmtFull(s){if(!s)return'-';return new Date(s).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});}
+function fmtK(n){n=Math.round(n);if(n>=100000000)return(n/100000000).toFixed(1)+'억';if(n>=10000)return(n/10000).toFixed(0)+'만';return String(n);}
+function fmtChart(n){return Math.round(n).toLocaleString('ko-KR');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function compress(file,cb){var r=new FileReader();r.onload=function(ev){var img=new Image();img.onload=function(){var MAX=650,ratio=Math.min(MAX/img.width,MAX/img.height,1);var c=document.createElement('canvas');c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.78));};img.src=ev.target.result;};r.readAsDataURL(file);}
+function syncForm(){var g=function(id){return document.getElementById(id);};var f=S.form;if(g('f-name'))f.name=g('f-name').value;if(g('f-grading-co'))f.gradingCo=g('f-grading-co').value;if(g('f-grade'))f.grade=g('f-grade').value;if(g('f-code'))f.code=g('f-code').value;if(g('f-price'))f.price=g('f-price').value;if(g('f-target-price'))f.targetPrice=g('f-target-price').value;if(g('f-reason'))f.reason=g('f-reason').value;if(g('f-tags'))f.tags=g('f-tags').value;if(g('f-date')&&!S.dreamView)f.purchaseDate=g('f-date').value;}
+function parseTags(str){return String(str||'').split(',').map(function(t){return t.trim();}).filter(function(t){return t.length>0;});}
+function getLatestPrice(card){
+  var h=card.priceHistory||[];
+  if(!h.length)return null;
+  return h.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);})[0].price;
+}
+function nowDTL(){// current datetime-local string (for max= attribute)
+  var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+function gradeColor(v,co){
+  if(!v)return'#9ca3af';
+  if(v==='RAW')return'#6b7280';
+  if(v==='10BL')return'#e040fb';// BGS Black Label - special purple
+  if(v==='A')return'#a78bfa';
+  var n=parseFloat(v);
+  if(n===10)return co==='BGS'?'#22d3ee':co==='BRG'?'#f472b6':'#f59e0b';
+  if(n>=9)return'#34d399';if(n>=7)return'#60a5fa';if(n>=5)return'#c084fc';return'#fb7185';
+}
+function ebayUrl(card){return'https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''))+'&LH_Sold=1&LH_Complete=1';}
+function googleUrl(card){return'https://www.google.com/search?q='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:'')+(card.psaGrade?'':' 카드')+' 시세 가격');}
+function kreamUrl(card){return'https://kream.co.kr/search?keyword='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''));}
+function mercariUrl(card){return'https://jp.mercari.com/search?keyword='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''));}
+function copyText(txt){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(txt);var el=document.createElement('textarea');el.value=txt;el.style.cssText='position:fixed;opacity:0;';document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);return Promise.resolve();}
+
+// ─── PSA duplicate check ──────────────────────────────────────────────────────
+// Returns the conflicting card if found, null if OK
+function findPsaDupe(psaCode,excludeId,gradingCo){
+  if(!psaCode||!String(psaCode).trim())return null;
+  var code=String(psaCode).trim();
+  var co=gradingCo||S.form&&S.form.gradingCo||'PSA';
+  for(var i=0;i<S.cards.length;i++){
+    var c=S.cards[i];
+    if(excludeId&&c.id===excludeId)continue;
+    if(!!c.isDream!==S.dreamView)continue;
+    if(c.psaCode&&String(c.psaCode).trim()===code&&(c.gradingCo||'PSA')===co)return c;
+  }
+  return null;
+}
+// Check within a list of cards (for import batch internal dupes)
+function findPsaDupeInList(psaCode,list,skipIdx,gradingCo){
+  if(!psaCode||!String(psaCode).trim())return null;
+  var code=String(psaCode).trim();
+  var co=gradingCo||'PSA';
+  for(var i=0;i<list.length;i++){
+    if(i===skipIdx)continue;
+    if(list[i].psaCode&&String(list[i].psaCode).trim()===code&&(list[i].gradingCo||'PSA')===co)return list[i];
+  }
+  return null;
+}
+
+// ─── PWA Manifest (Blob URL approach for single-file PWA) ─────────────────────
+function setupPWA(){
+  // Generate icon on canvas: 512×512 dark bg + ⚡
+  var size=512;
+  var c=document.createElement('canvas');c.width=size;c.height=size;
+  var ctx=c.getContext('2d');
+  // Background
+  var grad=ctx.createLinearGradient(0,0,size,size);
+  grad.addColorStop(0,'#111827');grad.addColorStop(1,'#070c14');
+  ctx.fillStyle=grad;
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(0,0,size,size,size*0.2):ctx.rect(0,0,size,size);ctx.fill();
+  // Lightning bolt
+  ctx.fillStyle='#f59e0b';ctx.font='bold 320px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('⚡',size/2,size/2+20);
+  var iconDataUrl=c.toDataURL('image/png');
+
+  // Set apple-touch-icon (for iOS)
+  var appleLink=document.createElement('link');appleLink.rel='apple-touch-icon';appleLink.href=iconDataUrl;document.head.appendChild(appleLink);
+
+  // Build manifest with blob URL
+  var manifest={
+    name:'카드 컬렉션',short_name:'카드컬렉션',
+    description:'내 카드 컬렉션을 관리해요',
+    start_url:'.',display:'standalone',
+    background_color:'#070c14',theme_color:'#070c14',
+    orientation:'portrait',
+    icons:[
+      {src:iconDataUrl,sizes:'192x192',type:'image/png',purpose:'any maskable'},
+      {src:iconDataUrl,sizes:'512x512',type:'image/png',purpose:'any maskable'}
+    ]
+  };
+  try{
+    var blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+    var url=URL.createObjectURL(blob);
+    var link=document.createElement('link');link.rel='manifest';link.href=url;
+    document.head.appendChild(link);
+  }catch(e){}
+}
+
+// ─── SVG Chart ────────────────────────────────────────────────────────────────
+function drawChart(history,buyPrice,salePrice,isSold,mode,soldRefs,opts){
+  // opts: {isDream, targetPrice}
+  var isDream=opts&&opts.isDream;
+  var targetPrice=opts&&opts.targetPrice||0;
+  var hasH=history&&history.length>0;
+  var hasSR=soldRefs&&soldRefs.length>0;
+  if(!hasH&&!buyPrice&&!hasSR)return'';
+  var W=Math.min(window.innerWidth-40,400),H=175;var PL=8,PR=8,PT=30,PB=34;var iw=W-PL-PR,ih=H-PT-PB;
+  var all=[];
+  if(hasH)history.forEach(function(p){all.push(p.price);});
+  if(buyPrice)all.push(buyPrice);if(isSold&&salePrice)all.push(salePrice);
+  if(hasSR)soldRefs.forEach(function(p){all.push(p.price);});
+  if(isDream&&targetPrice)all.push(targetPrice);
+  if(!all.length)return'';
+  var minP=Math.min.apply(null,all),maxP=Math.max.apply(null,all);
+  var pad=(maxP-minP)*0.22||maxP*0.18||500;minP-=pad;maxP+=pad;var range=maxP-minP;
+  function py(p){return PT+(1-(p-minP)/range)*ih;}
+  // Always date-based x — sort history by date first
+  var sortedH=hasH?history.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);}):[];
+  var allDates=[];
+  if(hasH)sortedH.forEach(function(p){allDates.push(new Date(p.date).getTime());});
+  if(hasSR)soldRefs.forEach(function(p){allDates.push(new Date(p.date).getTime());});
+  var minDate=allDates.length?Math.min.apply(null,allDates):0;
+  var maxDate=allDates.length>1?Math.max.apply(null,allDates):minDate+86400000;
+  var dateSpan=maxDate-minDate||86400000;
+  function pxDate(d){return PL+((new Date(d).getTime()-minDate)/dateSpan)*iw;}
+  // History line (date-based, always)
+  var pathD='',areaD='',dots='',labels='';
+  if(hasH&&sortedH.length>=2){
+    var pts=sortedH.map(function(p){
+      return{x:pxDate(p.date),y:py(p.price),price:p.price};
+    });
+    pathD=pts.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+    areaD=pathD+' L'+pts[pts.length-1].x.toFixed(1)+','+(PT+ih)+' L'+pts[0].x.toFixed(1)+','+(PT+ih)+' Z';
+    dots=pts.map(function(p){return'<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3" fill="#f59e0b"/>';}).join('');
+    if(mode==='labels'){
+      var prevLX=-999;
+      labels=pts.map(function(p,i){
+        var too=Math.abs(p.x-prevLX)<44;if(too&&i!==pts.length-1)return'';prevLX=p.x;
+        var above=i%2===0;var lx=p.x,ly=above?Math.max(PT+9,p.y-10):Math.min(PT+ih-4,p.y+16);
+        var anchor='middle';if(lx<24){lx+=4;anchor='start';}else if(lx>W-24){lx-=4;anchor='end';}
+        return'<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="'+anchor+'" fill="#f59e0b" font-size="8" font-weight="600" opacity=".9">'+fmtChart(p.price)+'</text>';
+      }).join('');
+    }else if(mode==='minmax'&&pts.length>=2){
+      var prices=pts.map(function(p){return p.price;});
+      var maxVal=Math.max.apply(null,prices),minVal=Math.min.apply(null,prices);
+      labels=pts.map(function(p,i){
+        if(p.price!==maxVal&&p.price!==minVal)return'';
+        var isMax=p.price===maxVal;
+        var lx=p.x,ly=isMax?Math.max(PT+9,p.y-10):Math.min(PT+ih-4,p.y+16);
+        var anchor='middle';if(lx<24){lx+=4;anchor='start';}else if(lx>W-24){lx-=4;anchor='end';}
+        var col=isMax?'#34d399':'#f87171';
+        return'<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="'+anchor+'" fill="'+col+'" font-size="8" font-weight="700" opacity=".95">'+(isMax?'▲':'▼')+fmtChart(p.price)+'</text>';
+      }).join('');
+    }
+  }else if(hasH&&sortedH.length===1){
+    var mx=pxDate(sortedH[0].date),my=py(sortedH[0].price);
+    dots='<circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="4" fill="#f59e0b"/>';
+    if(mode!=='off')labels='<text x="'+mx.toFixed(1)+'" y="'+(my-10).toFixed(1)+'" text-anchor="middle" fill="#f59e0b" font-size="8" font-weight="600">'+fmtChart(sortedH[0].price)+'</text>';
+  }
+  // Sold ref diamond markers
+  var soldRefSvg='';
+  if(hasSR){
+    soldRefSvg=soldRefs.map(function(p){
+      var sx=pxDate(p.date),sy=py(p.price),d=5;
+      var dp='M'+sx.toFixed(1)+','+(sy-d).toFixed(1)+' L'+(sx+d).toFixed(1)+','+sy.toFixed(1)+' L'+sx.toFixed(1)+','+(sy+d).toFixed(1)+' L'+(sx-d).toFixed(1)+','+sy.toFixed(1)+' Z';
+      var lx=sx,anchor='middle';
+      if(lx<20){lx+=4;anchor='start';}else if(lx>W-20){lx-=4;anchor='end';}
+      var lbl=mode!=='off'?'<text x="'+lx.toFixed(1)+'" y="'+(sy-d-3).toFixed(1)+'" text-anchor="'+anchor+'" fill="#22c55e" font-size="8" font-weight="700" opacity=".9">'+fmtChart(p.price)+'</text>':'';
+      return'<path d="'+dp+'" fill="#22c55e" opacity=".85"/>'+lbl;
+    }).join('');
+  }
+  var buyLine='',buyLbl='';if(buyPrice){var by=py(buyPrice);buyLine='<line x1="'+PL+'" y1="'+by.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+by.toFixed(1)+'" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5 3"/>';buyLbl='<text x="'+(W-PR-2)+'" y="'+(by-4).toFixed(1)+'" text-anchor="end" fill="#60a5fa" font-size="8">'+(isDream?'예상가 ':'매입 ')+fmtChart(buyPrice)+'</text>';}
+  var targetLine='',targetLbl='';if(isDream&&targetPrice){var ty=py(targetPrice);targetLine='<line x1="'+PL+'" y1="'+ty.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+ty.toFixed(1)+'" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3 4"/>';targetLbl='<text x="'+(W-PR-2)+'" y="'+(ty-4).toFixed(1)+'" text-anchor="end" fill="#a78bfa" font-size="8">목표가 '+fmtChart(targetPrice)+'</text>';}
+  var sellLine='',sellLbl='';if(!isDream&&isSold&&salePrice){var sy3=py(salePrice);sellLine='<line x1="'+PL+'" y1="'+sy3.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+sy3.toFixed(1)+'" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 3"/>';sellLbl='<text x="'+(W-PR-2)+'" y="'+(sy3-4).toFixed(1)+'" text-anchor="end" fill="#22c55e" font-size="8">판매 '+fmtChart(salePrice)+'</text>';}
+  // X labels from merged timeline
+  var allPts=[];
+  if(hasH)sortedH.forEach(function(p){allPts.push({date:p.date,isSR:false});});
+  if(hasSR)soldRefs.forEach(function(p){allPts.push({date:p.date,isSR:true});});
+  allPts.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var xLabels='';
+  if(allPts.length>=2){var maxL=Math.min(allPts.length,4),step=Math.max(1,Math.floor((allPts.length-1)/(maxL-1)));xLabels=allPts.map(function(p,i){if(i%step!==0&&i!==allPts.length-1)return'';var x=pxDate(p.date);return'<text x="'+x.toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle" fill="'+(p.isSR?'#22c55e':'#6b7280')+'" font-size="9">'+fmtDate(p.date)+'</text>';}).join('');}
+  // Legend
+  var legend='<text x="'+PL+'" y="'+(PT-10)+'" fill="#f59e0b" font-size="8">● 시세기록</text>'+(hasSR?'<text x="'+(PL+56)+'" y="'+(PT-10)+'" fill="#22c55e" font-size="8">◆ 유사카드 판매</text>':'')+(isDream&&targetPrice?'<text x="'+(PL+(hasSR?112:56))+'" y="'+(PT-10)+'" fill="#a78bfa" font-size="8">— 목표가</text>':'');
+  return'<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block;margin:0 auto"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity=".2"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/></linearGradient></defs>'+legend+(areaD?'<path d="'+areaD+'" fill="url(#cg)"/>':'')+(pathD?'<path d="'+pathD+'" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>':'')+dots+labels+soldRefSvg+buyLine+buyLbl+targetLine+targetLbl+sellLine+sellLbl+xLabels+'</svg>';
+}
+
+// ─── Filter & Sort ────────────────────────────────────────────────────────────
+var SORT_OPTIONS=[{v:'createdAt',label:'등록일'},{v:'purchaseDate',label:'매입일'},{v:'purchasePrice',label:'매입가'},{v:'marketPrice',label:'최근 시세'},{v:'psaGrade',label:'등급'}];
+function getFiltered(){
+  // Filter by current deck (dream or main)
+  var cards=S.cards.filter(function(c){return!!c.isDream===S.dreamView;});
+  if(!S.dreamView){// sold filter only for owned cards
+    if(S.filterSold==='active')cards=cards.filter(function(c){return!c.sold;});
+    else if(S.filterSold==='sold')cards=cards.filter(function(c){return c.sold;});
+  }
+  if(S.search.trim()){var q=S.search.trim().toLowerCase();cards=cards.filter(function(c){return(c.name||'').toLowerCase().indexOf(q)>=0||(c.psaCode||'').indexOf(q)>=0||(c.psaGrade||'').toLowerCase().indexOf(q)>=0||(c.purchaseReason||'').toLowerCase().indexOf(q)>=0||((c.tags||[]).join(' ')).toLowerCase().indexOf(q)>=0;});}
+  cards.sort(function(a,b){var va,vb;if(S.sortBy==='purchasePrice'){va=a.purchasePrice||0;vb=b.purchasePrice||0;}else if(S.sortBy==='marketPrice'){va=getLatestPrice(a)||0;vb=getLatestPrice(b)||0;}else if(S.sortBy==='psaGrade'){va=gNum(a.psaGrade);vb=gNum(b.psaGrade);}else if(S.sortBy==='purchaseDate'){va=a.purchaseDate?new Date(a.purchaseDate).getTime():0;vb=b.purchaseDate?new Date(b.purchaseDate).getTime():0;}else{va=new Date(a.createdAt||0).getTime();vb=new Date(b.createdAt||0).getTime();}return S.sortDir==='asc'?va-vb:vb-va;});
+  return cards;
+}
+
+// ─── Collection HTML ──────────────────────────────────────────────────────────
+function buildColBody(){
+  var ownedCards=S.cards.filter(function(c){return!c.isDream;});
+  var dreamCards=S.cards.filter(function(c){return!!c.isDream;});
+  // Deck toggle
+  var deckToggle='<div style="display:flex;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:3px;gap:3px;margin:12px 16px 0;">'+
+    '<button id="btn-deck-main" style="flex:1;padding:7px;font-size:12px;font-weight:700;border:none;border-radius:9px;cursor:pointer;background:'+(S.dreamView?'transparent':'#f59e0b')+';color:'+(S.dreamView?'#6b7280':'#000')+'">📦 내 컬렉션 <span style="font-size:10px;opacity:.75">('+ownedCards.length+')</span></button>'+
+    '<button id="btn-deck-dream" style="flex:1;padding:7px;font-size:12px;font-weight:700;border:none;border-radius:9px;cursor:pointer;background:'+(S.dreamView?'#a78bfa':'transparent')+';color:'+(S.dreamView?'#000':'#6b7280')+'">⭐ 드림카드 <span style="font-size:10px;opacity:.75">('+dreamCards.length+')</span></button>'+
+    '</div>';
+  // Stats
+  var stats='';
+  if(S.dreamView){
+    var totalTarget=dreamCards.reduce(function(s,c){return s+(c.targetPrice||0);},0);
+    var totalMkt=dreamCards.reduce(function(s,c){var p=getLatestPrice(c);return s+(p||0);},0);
+    var mktCardsCount=dreamCards.filter(function(c){return getLatestPrice(c);}).length;
+    stats='<div class="stats-row">'+
+      '<div class="stat-card"><p class="stat-label">드림 카드</p><p class="stat-value">'+dreamCards.length+'장</p></div>'+
+      '<div class="stat-card"><p class="stat-label">목표가 합</p><p class="stat-value" style="color:#a78bfa">'+(totalTarget?fmtW(totalTarget):'-')+'</p></div>'+
+      '<div class="stat-card"><p class="stat-label">현재 시세 합</p><p class="stat-value" style="color:#f59e0b">'+(totalMkt?fmtW(totalMkt):'-')+'<span style="font-size:9px;color:#6b7280;font-weight:400">'+(mktCardsCount?' ('+mktCardsCount+'장)':'')+'</span></p></div>'+
+      '<div class="stat-card"><p class="stat-label">코드</p><p class="stat-value" style="font-size:9px;font-weight:400;color:#6b7280">참고용 · 독립관리</p></div>'+
+      '</div>';
+  }else{
+    var active=ownedCards.filter(function(c){return!c.sold;}),sold2=ownedCards.filter(function(c){return c.sold;});
+    var totalP=ownedCards.reduce(function(s,c){return s+(c.purchasePrice||0);},0);
+    var totalM=active.reduce(function(s,c){var p=getLatestPrice(c);return s+(p||0);},0);
+    var realized=sold2.reduce(function(s,c){return s+((c.salePrice||0)-(c.purchasePrice||0));},0);
+    stats='<div class="stats-row">'+
+      '<div class="stat-card"><p class="stat-label">총 카드</p><p class="stat-value">'+ownedCards.length+'장</p></div>'+
+      '<div class="stat-card"><p class="stat-label">총 매입</p><p class="stat-value gold">'+fmtW(totalP)+'</p></div>'+
+      '<div class="stat-card"><p class="stat-label">시세 합</p><p class="stat-value">'+(totalM?fmtW(totalM):'-')+'</p></div>'+
+      '<div class="stat-card"><p class="stat-label">실현 수익</p><p class="stat-value '+(realized>0?'green':realized<0?'':'')+'">'+( sold2.length?(realized>=0?'+':'')+fmtW(realized):'-')+'</p></div></div>';
+  }
+  var sortOpts=SORT_OPTIONS.map(function(o){return'<option value="'+o.v+'"'+(S.sortBy===o.v?' selected':'')+'>'+o.label+'</option>';}).join('');
+  var filterRow='<div class="filter-row"><select class="sort-select" id="sort-select">'+sortOpts+'</select>'+
+    '<button class="sort-dir-btn" id="sort-dir-btn">'+(S.sortDir==='desc'?'↓':'↑')+'</button>'+
+    (!S.dreamView?'<div class="status-chips">'+
+      '<button class="chip'+(S.filterSold==='all'?' active':'')+'" data-status="all">전체</button>'+
+      '<button class="chip'+(S.filterSold==='active'?' active':'')+'" data-status="active">보유중</button>'+
+      '<button class="chip'+(S.filterSold==='sold'?' active':'')+'" data-status="sold">판매완료</button></div>':'')+
+    '</div>';
+  var filtered=getFiltered();
+  var toolbar='<div class="toolbar"><p class="section-label">'+filtered.length+'장</p><div class="grid-toggle">'+[2,3,4].map(function(n){return'<button class="grid-btn'+(S.cols===n?' active':'')+'" data-cols="'+n+'">'+n+'열</button>';}).join('')+'</div></div>';
+  var grid='';
+  if(filtered.length===0){
+    var emptyIcon=S.dreamView?'⭐':'📭';
+    var emptyMsg=S.dreamView?'드림카드가 없어요':'아직 카드가 없어요';
+    var emptySub=S.dreamView?'카드 추가 탭에서 갖고싶은 카드를 등록해보세요':'카드 추가 탭에서 첫 카드를 등록해보세요';
+    if(S.search){emptyIcon='🔍';emptyMsg='검색 결과가 없어요';emptySub='다른 검색어를 시도해보세요';}
+    grid='<div class="empty-state"><div class="empty-icon">'+emptyIcon+'</div><p>'+emptyMsg+'</p><p class="empty-sub">'+emptySub+'</p></div>';
+  }else{
+    var thumbs=filtered.map(function(card){
+      var co2=card.gradingCo||'PSA';
+      var color=gradeColor(card.psaGrade,co2);
+      var gradeTag=card.psaGrade?'<div class="grade-tag" style="background:'+color+'B3;border:1px solid '+color+';color:#fff">'+
+        (co2!=='PSA'?'<span style="font-size:6px;display:block;opacity:.8;line-height:1.2;letter-spacing:.03em">'+co2+'</span>':'')+
+        '<span class="grade-num">'+esc(gNumLabel(card.psaGrade))+'</span></div>':'';
+      var soldCorner=card.sold?'<div class="sold-corner"></div>':'';
+      var dreamBadge=card.isDream?'<div style="position:absolute;top:5px;left:5px;font-size:12px;filter:drop-shadow(0 0 3px rgba(0,0,0,.8))">⭐</div>':'';
+      var latestMkt=getLatestPrice(card);
+      var trendEmoji=(!card.isDream&&!card.sold&&latestMkt&&card.purchasePrice)?(latestMkt>card.purchasePrice?'🔺':latestMkt<card.purchasePrice?'🔻':''):'';
+      var isGain=(!card.isDream&&!card.sold&&latestMkt&&card.purchasePrice&&latestMkt>card.purchasePrice);
+      var priceInfo=card.isDream?
+        (latestMkt?'<p class="thumb-price" style="color:#f59e0b">시세 '+fmtW(latestMkt)+'</p>':
+         card.targetPrice?'<p class="thumb-price" style="color:#a78bfa">목표 '+fmtW(card.targetPrice)+'</p>':''):
+        card.sold&&card.salePrice?'<p class="thumb-price">판매 '+fmtW(card.salePrice)+'</p>':
+        (card.purchasePrice?'<p class="thumb-price">'+fmtW(card.purchasePrice)+'</p>':'')+
+        (!card.sold&&latestMkt?'<p class="thumb-price" style="color:#f59e0b">시세 '+fmtW(latestMkt)+(trendEmoji?' '+trendEmoji:'')+'</p>':'');
+      var gainGradient=isGain?'background:linear-gradient(to top, rgba(34,197,94,.09) 0%, transparent 100%);':'';
+      var cardBorder=card.isDream?'border-color:#4c1d95;':isGain?'border-color:rgba(34,197,94,.25);':'';
+      var imgEl=card.img?'<img src="'+card.img+'" alt="" loading="lazy" onerror="this.style.display=\'none\'"/>':'<span style="font-size:32px;opacity:.25">🃏</span>';
+      return'<div class="card-thumb'+(card.sold?' sold-card':'')+'" data-id="'+card.id+'" style="'+cardBorder+'">'+
+        '<div class="thumb-img">'+imgEl+gradeTag+soldCorner+dreamBadge+'</div>'+
+        '<div class="thumb-info" style="'+gainGradient+'"><p class="thumb-name">'+esc(card.name)+'</p>'+priceInfo+'</div></div>';
+    }).join('');
+    grid='<div class="card-grid" style="grid-template-columns:repeat('+S.cols+',1fr)">'+thumbs+'</div>';
+  }
+  return deckToggle+stats+filterRow+toolbar+grid;
+}
+function buildCollectionHTML(){return'<div class="search-wrap"><div class="search-box"><span class="search-icon">🔍</span><input class="search-inp" id="search-inp" placeholder="이름, 태그, 코드 검색..." value="'+esc(S.search)+'"/></div></div><div id="col-body">'+buildColBody()+'</div>';}
+function updateColBody(){var el=document.getElementById('col-body');if(el){el.innerHTML=buildColBody();bindColBodyEvents();}}
+function bindColBodyEvents(){
+  document.querySelectorAll('.card-thumb').forEach(function(el){el.addEventListener('click',function(){openModal(el.dataset.id);});});
+  document.querySelectorAll('.grid-btn').forEach(function(btn){btn.addEventListener('click',function(){S.cols=parseInt(btn.dataset.cols);saveMeta();updateColBody();});});
+  document.querySelectorAll('[data-status]').forEach(function(btn){btn.addEventListener('click',function(){S.filterSold=btn.dataset.status;updateColBody();});});
+  var sel=document.getElementById('sort-select');sel&&sel.addEventListener('change',function(){S.sortBy=this.value;saveMeta();updateColBody();});
+  var dirBtn=document.getElementById('sort-dir-btn');dirBtn&&dirBtn.addEventListener('click',function(){S.sortDir=S.sortDir==='desc'?'asc':'desc';saveMeta();updateColBody();});
+  // Deck toggle
+  var btnMain=document.getElementById('btn-deck-main');
+  var btnDream=document.getElementById('btn-deck-dream');
+  btnMain&&btnMain.addEventListener('click',function(){if(S.dreamView){S.dreamView=false;saveMeta();updateColBody();}});
+  btnDream&&btnDream.addEventListener('click',function(){if(!S.dreamView){S.dreamView=true;saveMeta();updateColBody();}});
+}
+
+// ─── Add Form ─────────────────────────────────────────────────────────────────
+function buildAddFormHTML(){
+  if(!S.form)S.form={name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};
+  var f=S.form;
+  if(!f.gradingCo)f.gradingCo='PSA';
+  var co=f.gradingCo;
+  var gradeOpts=getGrades(co).map(function(g){return'<option value="'+g.v+'"'+(f.grade===g.v?' selected':'')+'>'+esc(g.label)+'</option>';}).join('');
+  var imgEl=f.img?'<img src="'+f.img+'" alt="" onerror="this.style.display=\'none\'"/>':'<div class="img-placeholder"><div class="img-icon">🃏</div><p>탭하여 사진 선택 / 촬영</p></div>';
+  var changeBtn=f.img?'<button class="img-change-btn" id="btn-change-add-img">📷 변경</button>':'';
+  // Cert link based on company
+  var certPreview='';
+  if(f.code&&f.code.trim()){
+    var cl=co==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+f.code:co==='BRG'?'https://break.co.kr/certification/'+f.code:'https://www.psacard.com/cert/'+f.code+'/psa';
+    certPreview='<a href="'+esc(cl)+'" target="_blank" class="psa-preview"><span>🔗</span><span>'+esc(cl.replace('https://',''))+'</span></a>';
+  }
+  var dupeWarn='';
+  if(f.code&&f.code.trim()){var dupe=findPsaDupe(f.code,null,f.gradingCo||'PSA');if(dupe){dupeWarn='<div class="dupe-warn"><span>⚠️</span><p>'+esc(dupe.gradingCo||'PSA')+' 코드 '+esc(f.code)+' 는 이미 등록된 카드예요.<br/><strong>'+esc(dupe.name)+'</strong>'+(dupe.psaGrade?' ('+esc(dupe.gradingCo||'PSA')+' '+esc(dupe.psaGrade)+')':'')+'</p></div>';}}
+  var tagChips='';var tags2=parseTags(f.tags);if(tags2.length)tagChips='<div class="tag-chips">'+tags2.map(function(t){return'<span class="tag-chip">'+esc(t)+'</span>';}).join('')+'</div>';
+  var coOpts=['PSA','BGS','BRG'].map(function(c){return'<option value="'+c+'"'+(co===c?' selected':'')+'>'+c+(c==='BGS'?' (Beckett)':c==='BRG'?' (Break)':'')+'</option>';}).join('');
+  var today=new Date().toISOString().slice(0,10);
+  var isDream=S.dreamView;
+  var formTitle=isDream?'⭐ 드림카드 등록':'New Card';
+  var reasonLabel=isDream?'원하는 이유 / 메모':'매입 이유';
+  var reasonPlaceholder=isDream?'이 카드를 원하는 이유를 적어주세요.':'이 카드를 매입한 이유를 적어주세요.';
+  var dreamNote=isDream?'<div style="background:#1a0f2e;border:1px solid #4c1d95;border-radius:12px;padding:10px 14px;font-size:11px;color:#a78bfa;line-height:1.5">⭐ 드림카드로 등록돼요. 코드는 참고용으로만 사용되며 내 컬렉션과 중복 검사가 분리돼요.</div>':'';
+  return'<div class="form-wrap"><p class="form-title">'+formTitle+'</p>'+
+    dreamNote+
+    '<div class="img-upload" id="img-upload">'+imgEl+changeBtn+'<input id="img-input" type="file" accept="image/*" style="display:none"/></div>'+
+    '<div class="field"><label class="lbl">카드 이름</label><input class="inp" id="f-name" type="text" placeholder="예: 리자몽 EX holo" value="'+esc(f.name)+'"/></div>'+
+    '<div class="grid2">'+
+      '<div class="field"><label class="lbl">그레이딩사</label><select class="inp" id="f-grading-co" style="-webkit-appearance:none">'+coOpts+'</select></div>'+
+      '<div class="field"><label class="lbl">등급</label><select class="inp" id="f-grade" style="-webkit-appearance:none"><option value="">선택</option>'+gradeOpts+'</select></div>'+
+    '</div>'+
+    '<div class="field"><label class="lbl">인증 코드</label><input class="inp" id="f-code" type="number" placeholder="코드번호" value="'+esc(f.code)+'"/></div>'+
+    dupeWarn+certPreview+
+    (isDream?
+      '<div class="field"><label class="lbl">희망 목표가 (₩) — 이 가격이면 살게요</label><input class="inp" id="f-target-price" type="number" placeholder="예: 300000" value="'+esc(f.targetPrice||'')+'"/></div>':
+      '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="f-price" type="number" placeholder="0" value="'+esc(f.price)+'"/></div>'+
+      '<div class="field"><label class="lbl">매입 날짜</label><input class="inp" id="f-date" type="date" value="'+(f.purchaseDate||today)+'" max="'+today+'"/></div>'
+    )+
+    '<div class="field"><label class="lbl">태그 (쉼표로 구분)</label><input class="inp" id="f-tags" type="text" placeholder="희귀, 초판, 보류" value="'+esc(f.tags)+'"/>'+tagChips+'</div>'+
+    '<div class="field"><label class="lbl">'+reasonLabel+'</label><textarea class="inp" id="f-reason" rows="3" placeholder="'+reasonPlaceholder+'">'+esc(f.reason)+'</textarea></div>'+
+    '<button class="btn-gold" id="btn-add-card" style="'+(isDream?'background:#a78bfa;':'')+'">'+
+      (isDream?'⭐ 드림카드에 추가 ›':'컬렉션에 추가 ›')+'</button></div>';
+}
+
+
+
+function buildModalInfo(card,editing){
+  if(editing&&S.draft){
+    var d=S.draft;
+    var dco=d.gradingCo||'PSA';
+    var gradeOpts2=getGrades(dco).map(function(g){return'<option value="'+g.v+'"'+(d.psaGrade===g.v?' selected':'')+'>'+esc(g.label)+'</option>';}).join('');
+    var dcoOpts=['PSA','BGS','BRG'].map(function(c){return'<option value="'+c+'"'+(dco===c?' selected':'')+'>'+c+(c==='BGS'?' (Beckett)':c==='BRG'?' (Break)':'')+'</option>';}).join('');
+    var tagStr=Array.isArray(d.tags)?d.tags.join(', '):'';
+    return'<div class="modal-edit-fields"><div class="field"><label class="lbl">카드 이름</label><input class="inp" id="d-name" value="'+esc(d.name||'')+'"/></div>'+
+      '<div class="grid2">'+
+        '<div class="field"><label class="lbl">그레이딩사</label><select class="inp" id="d-grading-co" style="-webkit-appearance:none">'+dcoOpts+'</select></div>'+
+        '<div class="field"><label class="lbl">등급</label><select class="inp" id="d-grade" style="-webkit-appearance:none"><option value="">선택</option>'+gradeOpts2+'</select></div>'+
+      '</div>'+
+      '<div class="field"><label class="lbl">인증 코드</label><input class="inp" id="d-code" type="number" value="'+esc(d.psaCode||'')+'"/></div>'+
+      '<div id="edit-dupe-warn"></div>'+
+      (d.isDream?
+        '<div class="field"><label class="lbl">희망 목표가 (₩)</label><input class="inp" id="d-target-price" type="number" value="'+esc(String(d.targetPrice||''))+'" placeholder="이 가격이면 살게요"/></div>':
+        '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="d-price" type="number" value="'+esc(String(d.purchasePrice||''))+'"/></div>'+
+        '<div class="field"><label class="lbl">매입 날짜</label><input class="inp" id="d-date" type="date" value="'+esc(d.purchaseDate||'')+'"/></div>'
+      )+
+      '<div class="field"><label class="lbl">태그 (쉼표로 구분)</label><input class="inp" id="d-tags" value="'+esc(tagStr)+'"/></div>'+
+      '<div class="field"><label class="lbl">매입 이유</label><textarea class="inp" id="d-reason" rows="3">'+esc(d.purchaseReason||'')+'</textarea></div>'+
+      '<button class="btn-danger" id="btn-delete-card" style="margin-top:8px">카드 삭제</button></div>';
+  }
+  var h=card.priceHistory||[];
+  var sortedForDiff=h.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var latestP=sortedForDiff.length?sortedForDiff[sortedForDiff.length-1].price:null;
+  var prevEntry=sortedForDiff.length>=2?sortedForDiff[sortedForDiff.length-2]:null;
+  var prevP=prevEntry?prevEntry.price:null;
+  var diff=(latestP&&prevP)?latestP-prevP:null;
+  function relTime(dateStr){
+    var ms=Date.now()-new Date(dateStr).getTime();
+    var mins=Math.floor(ms/60000),hours=Math.floor(ms/3600000),days=Math.floor(ms/86400000);
+    if(mins<60)return mins+'분 전보다';
+    if(hours<24)return hours+'시간 전보다';
+    if(days===1)return'어제보다';
+    if(days<7)return days+'일 전보다';
+    if(days<14)return'1주일 전보다';
+    if(days<30)return Math.floor(days/7)+'주 전보다';
+    if(days<60)return'1개월 전보다';
+    return Math.floor(days/30)+'개월 전보다';
+  }
+  var diffLabel=prevEntry?relTime(prevEntry.date):'';
+  var co3=card.gradingCo||'PSA';
+  var psaUrl=certUrl(card);
+  var diffHtml=diff&&diff!==0?'<span class="diff '+(diff>0?'up':'down')+'" style="font-size:9px">'+(diff>0?'▲':'▼')+' '+fmtW(Math.abs(diff))+' <span style="color:#6b7280;font-weight:400">('+diffLabel+')</span></span>':'';
+  var tagsHtml=card.tags&&card.tags.length?'<div class="info-row col"><span class="info-label">태그</span><div class="tags-wrap">'+card.tags.map(function(t){return'<span class="tag-badge">'+esc(t)+'</span>';}).join('')+'</div></div>':'';
+  var sameCount=S.cards.filter(function(c){return(c.name||'').trim().toLowerCase()===(card.name||'').trim().toLowerCase();}).length;
+  var dupHtml=sameCount>1?'<div style="padding-bottom:4px"><span class="dup-badge">🃏 같은 이름 카드 '+sameCount+'장 보유</span></div>':'';
+  var dreamBadgeHtml=card.isDream?'<div style="padding-bottom:4px"><span class="dup-badge" style="background:#1a0f2e;border-color:#4c1d95;color:#a78bfa">⭐ 드림카드</span></div>':'';
+  return'<div class="info-rows">'+dreamBadgeHtml+dupHtml+
+    (card.isDream&&card.createdAt?'<div class="info-row"><span class="info-label">등록일</span><span class="info-val">'+fmtFull(card.createdAt)+'</span></div>':'')+
+    (!card.isDream&&card.purchaseDate?'<div class="info-row"><span class="info-label">매입 날짜</span><span class="info-val">'+fmtFull(card.purchaseDate)+'</span></div>':'')+
+    (!card.isDream&&card.purchasePrice?'<div class="info-row"><span class="info-label">매입 가격</span><span class="info-val">'+fmtW(card.purchasePrice)+'</span></div>':'')+
+    (card.isDream&&card.targetPrice?'<div class="info-row"><span class="info-label">희망 목표가</span><span class="info-val" style="color:#a78bfa">'+fmtW(card.targetPrice)+'</span></div>':'')+
+    (!card.isDream&&latestP?'<div class="info-row"><span class="info-label">최근 시세</span><span class="info-val">'+fmtW(latestP)+diffHtml+'</span></div>':'')+
+    (card.isDream&&latestP?'<div class="info-row"><span class="info-label">최근 시세</span><span class="info-val" style="color:#f59e0b">'+fmtW(latestP)+diffHtml+'</span></div>':'')+
+    (card.isDream&&latestP&&card.targetPrice?'<div class="info-row"><span class="info-label">목표가 대비</span><span class="info-val" style="color:'+(latestP<=card.targetPrice?'#34d399':'#f87171')+'">'+(latestP<=card.targetPrice?'✅ 목표가 이하':'▲ '+fmtW(latestP-card.targetPrice)+' 초과')+'</span></div>':'')+
+    (card.isDream&&(card.priceHistory||[]).length?'<div class="info-row"><span class="info-label">시세 기록</span><span class="info-val">'+(card.priceHistory||[]).length+'건 (시세 탭에서 확인)</span></div>':'')+
+    tagsHtml+
+    (card.purchaseReason?'<div class="info-row col"><span class="info-label">'+(card.isDream?'원하는 이유':'매입 이유')+'</span><span class="info-val">'+esc(card.purchaseReason)+'</span></div>':'')+
+    (!card.isDream&&card.createdAt?'<div class="info-row"><span class="info-label">등록일</span><span class="info-val">'+fmtFull(card.createdAt)+'</span></div>':'')+
+    (psaUrl?'<a href="'+psaUrl+'" target="_blank" class="psa-btn"><div><p style="font-size:13px;font-weight:600;color:#60a5fa">'+certLabel(co3)+'</p><p style="font-size:9px;color:#4b5563;margin-top:2px">코드: '+esc(card.psaCode)+'</p></div><span style="font-size:18px;color:#60a5fa">→</span></a>':'')+
+    '</div>';
+}
+function buildModalPrice(card){
+  var h=card.priceHistory||[];
+  // Collect sold records of same-named cards within last 5 months
+  var fiveMonthsAgo=new Date(Date.now()-5*30*24*60*60*1000);
+  var soldRefs=[];
+  S.cards.forEach(function(c){
+    if(c.id===card.id)return;
+    if(!c.sold||!c.salePrice||!c.saleDate)return;
+    if((c.name||'').trim().toLowerCase()!==(card.name||'').trim().toLowerCase())return;
+    if(new Date(c.saleDate)<fiveMonthsAgo)return;
+    soldRefs.push({price:c.salePrice,date:c.saleDate,name:c.name});
+  });
+  var modeLabels={labels:'가격 표시',minmax:'최고/최저',off:'숨기기'};
+  var chartHtml=(h.length>=1||card.purchasePrice||soldRefs.length)?
+    '<div class="chart-bar">'+
+      '<span class="chart-bar-label">시세 그래프'+(soldRefs.length?' <span style="font-size:9px;color:#22c55e">◆ '+soldRefs.length+'건</span>':'')+'</span>'+
+      '<div style="display:flex;background:#0d1117;border:1px solid #1f2937;border-radius:8px;padding:2px;gap:2px;">'+
+        ['labels','minmax','off'].map(function(m){
+          return'<button class="chart-mode-btn'+(S.chartMode===m?' active':'')+'" data-mode="'+m+'" style="padding:3px 8px;font-size:9px;font-weight:600;border:none;border-radius:6px;cursor:pointer;background:'+(S.chartMode===m?'#f59e0b':'transparent')+';color:'+(S.chartMode===m?'#000':'#6b7280')+'">'+modeLabels[m]+'</button>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    '<div class="chart-wrap">'+drawChart(h,card.isDream?0:card.purchasePrice,card.salePrice,card.sold,S.chartMode,soldRefs,{isDream:!!card.isDream,targetPrice:card.targetPrice||0})+'</div>':'';
+  var customUrl=card.customPriceUrl||'';
+  var mktLinks='<div class="market-links">'+
+    '<a href="'+esc(ebayUrl(card))+'" target="_blank" class="market-btn">🛒 eBay</a>'+
+    '<a href="'+esc(kreamUrl(card))+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
+    '<a href="'+esc(mercariUrl(card))+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
+    '<a href="'+esc(googleUrl(card))+'" target="_blank" class="market-btn">🔍 Google</a>'+
+    (customUrl?'<a href="'+esc(customUrl)+'" target="_blank" class="market-btn" style="border-color:#7c3aed;color:#c4b5fd">🔗 직접</a>':'')+
+    '</div>'+
+    '<div id="custom-url-row" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'+
+      '<input class="inp-sm" id="custom-url-inp" type="url" placeholder="시세 확인 URL 직접 입력..." value="'+esc(customUrl)+'" style="flex:1"/>'+
+      '<button id="btn-save-custom-url" style="background:#1f2937;border:1px solid #374151;border-radius:10px;padding:8px 12px;font-size:12px;color:#9ca3af;cursor:pointer;white-space:nowrap;flex-shrink:0">저장</button>'+
+    '</div>';
+  var addForm=S.addPrice?
+    '<div class="price-form-box"><div class="price-form-inputs"><input class="inp-sm" id="new-price-inp" type="number" placeholder="시세 (₩)"/><input class="inp-sm" id="new-price-date" type="datetime-local" value="'+nowDTL()+'" max="'+nowDTL()+'"/></div><input class="inp-sm" id="new-price-memo" placeholder="📝 출처 메모 (예: eBay 낙찰가)"/><div class="price-url-row"><input class="inp-sm price-url-inp" id="new-price-url" type="url" placeholder="🔗 출처 링크 (선택)"/></div><div class="price-form-btns"><button class="btn-ghost" id="btn-cancel-price" style="padding:10px;font-size:13px">취소</button><button class="btn-gold" id="btn-confirm-price" style="padding:10px;font-size:13px">추가</button></div></div>':
+    '<button class="btn-ghost" id="btn-open-add-price" style="margin-bottom:12px">+ 직접 시세 입력하기</button>';
+  var listItems=h.length===0?'<p class="empty-price">아직 시세 기록이 없어요</p>':
+    h.map(function(p,i){return{p:p,i:i};}).sort(function(a,b){return new Date(b.p.date)-new Date(a.p.date);}).map(function(item){var p=item.p,i=item.i;
+      var isEdit=S.editPriceIdx===i;
+      var srcBtn=p.sourceUrl?'<a href="'+esc(p.sourceUrl)+'" target="_blank" class="price-src-btn">🔗 <span>'+esc(p.sourceUrl.replace(/^https?:\/\//,'').slice(0,40))+'</span></a>':'';
+      var memo=p.memo?'<p class="price-memo-text">📝 '+esc(p.memo)+'</p>':'';
+      var editSec=isEdit?'<div class="price-edit-section"><div class="price-form-inputs"><input class="inp-sm" id="ep-val" type="number" value="'+p.price+'"/><input class="inp-sm" id="ep-date" type="datetime-local" value="'+new Date(new Date(p.date)-new Date(p.date).getTimezoneOffset()*60000).toISOString().slice(0,16)+'" max="'+nowDTL()+'"/></div><input class="inp-sm" id="ep-memo" placeholder="출처 메모" value="'+esc(p.memo||'')+'"/><div class="price-url-row"><input class="inp-sm price-url-inp" id="ep-url" type="url" placeholder="🔗 출처 링크" value="'+esc(p.sourceUrl||'')+'"/></div><div class="price-form-btns"><button class="btn-ghost" id="btn-cancel-edit-price" style="padding:9px;font-size:13px">취소</button><button class="btn-gold" id="btn-save-price" data-idx="'+i+'" style="padding:9px;font-size:13px">저장</button></div></div>':'';
+      return'<div class="price-item"><div class="price-item-row"><div class="price-item-left"><p class="price-date">'+fmtDt(p.date)+'</p><p class="price-val">'+fmtW(p.price)+'</p>'+memo+srcBtn+'</div><div class="price-actions"><button class="btn-icon edit-price-btn" data-idx="'+i+'">✏️</button><button class="btn-icon del-price-btn" data-idx="'+i+'">🗑️</button></div></div>'+editSec+'</div>';
+    }).join('');
+  return chartHtml+mktLinks+addForm+'<div class="price-list">'+listItems+'</div>';
+}
+function buildModalDreamConvert(card){
+  if(!S.dreamConvert){
+    var gi2=gInfo(card.psaGrade,card.gradingCo||'PSA');
+    return'<div style="display:flex;flex-direction:column;gap:16px">'+
+      '<div style="background:#0f2a1a;border:1px solid #166534;border-radius:14px;padding:14px 16px">'+
+        '<p style="font-size:13px;color:#22c55e;font-weight:700;margin-bottom:4px">⭐ 드림카드 → 내 컬렉션</p>'+
+        '<p style="font-size:11px;color:#9ca3af;line-height:1.5">구매 완료 시 기존 이미지와 인증코드는 초기화돼요.<br/>새 코드와 이미지, 매입가를 입력하면 내 컬렉션으로 이동해요.</p>'+
+      '</div>'+
+      '<div style="background:#111827;border:1px solid #1f2937;border-radius:12px;padding:12px 14px">'+
+        '<p style="font-size:10px;color:#6b7280;margin-bottom:6px">현재 드림카드 정보</p>'+
+        '<p style="font-size:13px;font-weight:600;color:#fff">'+esc(card.name)+'</p>'+
+        '<p style="font-size:11px;color:#9ca3af;margin-top:2px">'+(card.gradingCo||'PSA')+(card.psaGrade?' '+card.psaGrade+(gi2?' ('+gi2.short+')':''):' 등급없음')+'</p>'+
+      '</div>'+
+      '<button class="btn-gold" id="btn-start-convert" style="background:#22c55e">🛒 이 카드 구매했어요!</button>'+
+    '</div>';
+  }
+  var d=S.convertDraft||{};
+  var imgEl=d.img?'<img src="'+d.img+'" alt="" style="width:100%;height:100%;object-fit:contain"/>':'<div class="img-placeholder"><div class="img-icon">📷</div><p>새 사진 등록 (선택)</p></div>';
+  var today=new Date().toISOString().slice(0,10);
+  return'<div style="display:flex;flex-direction:column;gap:14px">'+
+    '<p style="font-size:10px;color:#22c55e;font-weight:700;text-transform:uppercase;letter-spacing:.1em">구매 정보 입력</p>'+
+    '<div class="img-upload" id="convert-img-upload" style="height:160px">'+imgEl+'<input id="convert-img-input" type="file" accept="image/*" style="display:none"/></div>'+
+    '<div class="field"><label class="lbl">인증 코드 (새 코드)</label><input class="inp" id="convert-code" type="number" placeholder="실제 인증 코드 입력" value="'+esc(d.code||'')+'"/></div>'+
+    '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="convert-price" type="number" placeholder="0" value="'+esc(d.price||'')+'"/></div>'+
+    '<div class="field"><label class="lbl">매입 날짜</label><input class="inp" id="convert-date" type="date" value="'+(d.date||today)+'" max="'+today+'"/></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">'+
+      '<button class="btn-ghost" id="btn-cancel-convert" style="padding:12px">취소</button>'+
+      '<button class="btn-gold" id="btn-confirm-convert" style="background:#22c55e;padding:12px">내 컬렉션으로 ›</button>'+
+    '</div>'+
+  '</div>';
+}
+function buildModalSale(card,editing){
+  var profit=(card.salePrice||0)-(card.purchasePrice||0);
+  if(editing&&S.draft){
+    var d=S.draft;
+    return'<div class="sale-section"><div class="toggle-row"><div><p class="toggle-label">판매 완료</p><p class="toggle-sub">판매한 카드로 표시해요</p></div><button class="toggle-btn '+(d.sold?'on':'off')+'" id="btn-sold-toggle"><div class="toggle-knob"></div></button></div>'+
+      (d.sold?'<div class="field"><label class="lbl">판매 날짜</label><input class="inp" id="d-sale-date" type="date" value="'+esc(d.saleDate||'')+'"/></div>'+
+        '<div class="field"><label class="lbl">판매 가격 (₩)</label><input class="inp" id="d-sale-price" type="number" value="'+esc(String(d.salePrice||''))+'"/></div>':'')+
+      '</div>';
+  }
+  // Unrealized gain for active cards (latest market price vs purchase price)
+  var latestMkt=getLatestPrice(card);
+  var unrealized=(!card.sold&&latestMkt&&card.purchasePrice)?latestMkt-card.purchasePrice:null;
+  var unrealizedHtml='';
+  if(unrealized!==null){
+    var ur=unrealized;
+    unrealizedHtml='<div class="profit-card" style="'+(ur>=0?'border-color:#166534;background:#0f2a1a':'border-color:#7f1d1d;background:#1a0a0a')+'">'+
+      '<p class="profit-label">현재 시세 기준 평가손익</p>'+
+      '<p class="profit-val '+(ur>=0?'pos':'neg')+'">'+(ur>=0?'+':'')+fmtW(ur)+'</p>'+
+      '<p style="font-size:10px;color:#6b7280;margin-top:4px">현재 시세 '+fmtW(latestMkt)+' vs 매입가 '+fmtW(card.purchasePrice)+'</p>'+
+    '</div>';
+  }
+  return'<div class="sale-section">'+
+    (card.sold?
+      '<div class="toggle-row" style="background:#0f2a1a;border-color:#166534"><div><p class="toggle-label" style="color:#22c55e">판매 완료 ✓</p>'+(card.saleDate?'<p class="toggle-sub">'+fmtFull(card.saleDate)+'</p>':'')+'</div><span style="font-size:20px">✅</span></div>'+
+      '<div class="grid2"><div class="stat-card"><p class="stat-label">판매 가격</p><p class="stat-value">'+fmtW(card.salePrice)+'</p></div><div class="stat-card"><p class="stat-label">매입 가격</p><p class="stat-value">'+fmtW(card.purchasePrice)+'</p></div></div>'+
+      '<div class="profit-card"><p class="profit-label">실현 수익</p><p class="profit-val '+(profit>=0?'pos':'neg')+'">'+(profit>=0?'+':'')+fmtW(profit)+'</p></div>':
+      '<div class="toggle-row" style="opacity:.5"><div><p class="toggle-label">보유 중</p><p class="toggle-sub">아직 판매하지 않은 카드예요</p></div><span style="font-size:20px">💎</span></div>'+
+      unrealizedHtml)+
+    '</div>';
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function getCard(){for(var i=0;i<S.cards.length;i++)if(S.cards[i].id===S.cardId)return S.cards[i];return null;}
+function openModal(id){
+  S.cardId=id;S.editing=false;S.section='info';S.addPrice=false;S.editPriceIdx=null;S.draft=null;S.dreamConvert=false;S.convertDraft=null;
+  renderModal();
+  document.getElementById('modal-overlay').style.display='flex';
+  history.pushState({overlay:'card'},''  );
+}
+function closeModal(){
+  S.cardId=null;S.editing=false;S.draft=null;S.addPrice=false;S.editPriceIdx=null;S.dreamConvert=false;S.convertDraft=null;
+  document.getElementById('modal-overlay').style.display='none';
+}
+function renderModal(){
+  var card=getCard();if(!card)return;
+  var d=S.editing&&S.draft?S.draft:card;
+  var mco=d.gradingCo||'PSA';
+  var color=gradeColor(d.psaGrade,mco);
+  var titleEl=document.getElementById('modal-title');
+  titleEl.innerHTML=esc(card.name)+'<span class="copy-hint">⎘</span>';
+  document.getElementById('modal-action-area').innerHTML=S.editing?'<div class="edit-bar"><button class="btn-cancel-e" id="btn-cancel-edit">취소</button><button class="btn-save" id="btn-save-edit">저장</button></div>':'<button class="btn-edit" id="btn-start-edit">편집</button>';
+  var imgEl=d.img?'<img src="'+d.img+'" alt="" onerror="this.style.display=\'none\'"/>':'<span class="modal-img-emoji">🃏</span>';
+  var gi=gInfo(d.psaGrade,mco);
+  var gradeBadge=d.psaGrade?'<div class="modal-card-grade" style="background:'+color+'B3;border:1px solid '+color+';color:#fff">'+
+    (mco!=='PSA'?'<span style="font-size:7px;display:block;opacity:.85;line-height:1.2">'+mco+'</span>':'')+
+    '<span class="g-num">'+esc(gNumLabel(d.psaGrade))+'</span>'+(gi&&gi.short?'<span class="g-desc">'+esc(gi.short)+'</span>':'')+' </div>':'';
+  var soldBar=card.sold&&!S.editing?'<div class="modal-card-sold">SOLD ✓</div>':'';
+  var changeBtn=S.editing?'<button class="btn-change-img" id="btn-change-img">📷 사진 변경</button>'+(d.img?'<button class="btn-change-img" id="btn-edit-img" style="border-color:#a78bfa;color:#a78bfa">✏️ 편집</button>':''):'';
+  document.getElementById('modal-content').innerHTML=
+    '<div class="modal-img-wrap"><div class="modal-img-inner">'+imgEl+gradeBadge+soldBar+'</div>'+changeBtn+'</div>'+
+    '<div class="section-tabs"><button class="tab-btn'+(S.section==='info'?' active':'')+'" data-sec="info">📋 정보</button><button class="tab-btn'+(S.section==='price'?' active':'')+'" data-sec="price">📈 시세</button><button class="tab-btn'+(S.section==='sale'?' active':'')+'" data-sec="sale">'+(card.isDream?'🛒 구매전환':'💰 판매')+'</button></div>'+
+    '<div id="modal-sec">'+(S.section==='info'?buildModalInfo(card,S.editing):S.section==='price'?buildModalPrice(card):card.isDream?buildModalDreamConvert(card):buildModalSale(card,S.editing))+'</div>';
+  bindModalEvents(card);
+}
+function bindModalEvents(card){
+  var q=function(id){return document.getElementById(id);};
+  // Copy title
+  document.getElementById('modal-title').addEventListener('click',function(){copyText(card.name).then(function(){var el=document.getElementById('modal-title');if(!el)return;el.innerHTML='복사됨! ✓';el.style.color='#34d399';setTimeout(function(){if(document.getElementById('modal-title'))renderModal();},1000);}).catch(function(){alert('클립보드 복사 미지원 브라우저입니다.');});});
+  // Edit
+  q('btn-start-edit')&&q('btn-start-edit').addEventListener('click',function(){S.editing=true;S.draft=JSON.parse(JSON.stringify(card));S.draft.img=card.img;renderModal();});
+  q('btn-cancel-edit')&&q('btn-cancel-edit').addEventListener('click',function(){S.editing=false;S.draft=null;renderModal();});
+  // Grading company change in edit mode → update grade dropdown
+  q('d-grading-co')&&q('d-grading-co').addEventListener('change',function(e){
+    S.draft.gradingCo=e.target.value;S.draft.psaGrade='';
+    var sel=q('d-grade');
+    if(sel)sel.innerHTML='<option value="">선택</option>'+getGrades(e.target.value).map(function(g){return'<option value="'+g.v+'">'+esc(g.label)+'</option>';}).join('');
+  });
+  q('d-grading-co')&&q('d-grading-co').addEventListener('input',function(e){
+    S.draft.gradingCo=e.target.value;S.draft.psaGrade='';
+    var sel=q('d-grade');
+    if(sel)sel.innerHTML='<option value="">선택</option>'+getGrades(e.target.value).map(function(g){return'<option value="'+g.v+'">'+esc(g.label)+'</option>';}).join('');
+  });
+  q('btn-save-edit')&&q('btn-save-edit').addEventListener('click',function(){
+    var newCode=q('d-code')?q('d-code').value.trim():'';
+    // PSA dupe check on save (exclude current card)
+    if(newCode){var newCo=q('d-grading-co')?q('d-grading-co').value:(card.gradingCo||'PSA');var dupe=findPsaDupe(newCode,card.id,newCo);if(dupe){alert('⚠️ '+newCo+' 코드 '+newCode+'는 이미 등록된 카드예요.\n('+dupe.name+')');return;}}
+    var u=JSON.parse(JSON.stringify(S.draft));
+    if(q('d-name'))u.name=q('d-name').value.trim()||card.name;
+    if(q('d-grading-co'))u.gradingCo=q('d-grading-co').value;
+    if(q('d-grade'))u.psaGrade=q('d-grade').value;
+    u.psaCode=newCode;
+    if(u.isDream){
+      if(q('d-target-price'))u.targetPrice=parseFloat(q('d-target-price').value)||0;
+    }else{
+      if(q('d-price'))u.purchasePrice=parseFloat(q('d-price').value)||0;
+      if(q('d-date'))u.purchaseDate=q('d-date').value;
+    }
+    if(q('d-tags'))u.tags=parseTags(q('d-tags').value);
+    if(q('d-reason'))u.purchaseReason=q('d-reason').value;
+    if(q('d-sale-date'))u.saleDate=q('d-sale-date').value;if(q('d-sale-price'))u.salePrice=parseFloat(q('d-sale-price').value)||0;
+    S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});saveData();S.editing=false;S.draft=null;updateColBody();renderModal();
+  });
+  // Live PSA dupe check in edit mode
+  q('d-code')&&q('d-code').addEventListener('input',function(){
+    var newCode=this.value.trim();var warnEl=document.getElementById('edit-dupe-warn');if(!warnEl)return;
+    if(newCode){var editCo=q('d-grading-co')?q('d-grading-co').value:(card.gradingCo||'PSA');var dupe=findPsaDupe(newCode,card.id,editCo);if(dupe){warnEl.innerHTML='<div class="dupe-warn" style="margin:4px 0"><span>⚠️</span><p>이미 등록된 코드예요 ('+editCo+'): <strong>'+esc(dupe.name)+'</strong></p></div>';return;}}
+    warnEl.innerHTML='';
+  });
+  q('btn-delete-card')&&q('btn-delete-card').addEventListener('click',function(){if(confirm('"'+card.name+'"을(를) 삭제할까요?')){S.cards=S.cards.filter(function(c){return c.id!==card.id;});saveData();closeModal();updateColBody();}});
+  document.querySelectorAll('#modal-content .tab-btn').forEach(function(btn){btn.addEventListener('click',function(){S.section=btn.dataset.sec;S.addPrice=false;S.editPriceIdx=null;renderModal();});});
+  q('btn-edit-img')&&q('btn-edit-img').addEventListener('click',function(){
+    if(!S.draft.img){alert('이미지가 없어요.');return;}
+    openImageEditor(S.draft.img,function(b64){S.draft.img=b64;renderModal();});
+  });
+  q('btn-change-img')&&q('btn-change-img').addEventListener('click',function(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;compressAndEdit(f,function(b64){S.draft.img=b64;renderModal();});};inp.click();});
+  document.querySelectorAll('.chart-mode-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){S.chartMode=btn.dataset.mode;saveMeta();renderModal();});
+  });
+  // Custom URL save
+  q('btn-save-custom-url')&&q('btn-save-custom-url').addEventListener('click',function(){
+    var url=q('custom-url-inp')?q('custom-url-inp').value.trim():'';
+    var u=JSON.parse(JSON.stringify(card));u.customPriceUrl=url;
+    S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});
+    saveData();updateColBody();renderModal();
+  });
+  q('custom-url-inp')&&q('custom-url-inp').addEventListener('keydown',function(e){if(e.key==='Enter'){q('btn-save-custom-url').click();}});
+  q('btn-open-add-price')&&q('btn-open-add-price').addEventListener('click',function(){S.addPrice=true;renderModal();setTimeout(function(){q('new-price-inp')&&q('new-price-inp').focus();},80);});
+  q('btn-cancel-price')&&q('btn-cancel-price').addEventListener('click',function(){S.addPrice=false;renderModal();});
+  function doAddPrice(){
+    var val=parseFloat(q('new-price-inp')?q('new-price-inp').value:0);
+    if(!val||isNaN(val)){alert('금액을 입력해주세요.');return;}
+    var dv=q('new-price-date')?q('new-price-date').value:'';
+    var memo=q('new-price-memo')?q('new-price-memo').value.trim():'';
+    var url=q('new-price-url')?q('new-price-url').value.trim():'';
+    var date=dv?new Date(dv).toISOString():new Date().toISOString();
+    var entry={price:val,date:date};
+    if(memo)entry.memo=memo;
+    if(url)entry.sourceUrl=url;
+    var u=JSON.parse(JSON.stringify(card));
+    u.priceHistory=(card.priceHistory||[]).concat([entry]);
+    S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});
+    saveData();S.addPrice=false;updateColBody();renderModal();
+  }
+  q('btn-confirm-price')&&q('btn-confirm-price').addEventListener('click',doAddPrice);
+  q('new-price-inp')&&q('new-price-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doAddPrice();});
+  document.querySelectorAll('.edit-price-btn').forEach(function(btn){btn.addEventListener('click',function(){S.editPriceIdx=parseInt(btn.dataset.idx);renderModal();});});
+  document.querySelectorAll('.del-price-btn').forEach(function(btn){btn.addEventListener('click',function(){if(!confirm('이 시세 기록을 삭제할까요?'))return;var idx=parseInt(btn.dataset.idx);var u=JSON.parse(JSON.stringify(card));u.priceHistory.splice(idx,1);S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});saveData();S.editPriceIdx=null;updateColBody();renderModal();});});
+  q('btn-save-price')&&q('btn-save-price').addEventListener('click',function(){
+    var idx=parseInt(q('btn-save-price').dataset.idx);
+    var val=parseFloat(q('ep-val')?q('ep-val').value:0);
+    if(!val||isNaN(val)){alert('올바른 금액을 입력해주세요.');return;}
+    var dv=q('ep-date')?q('ep-date').value:'';
+    var memo=q('ep-memo')?q('ep-memo').value.trim():'';
+    var url=q('ep-url')?q('ep-url').value.trim():'';
+    var u=JSON.parse(JSON.stringify(card));
+    var entry={price:val,date:dv?new Date(dv).toISOString():card.priceHistory[idx].date};
+    if(memo)entry.memo=memo;
+    if(url)entry.sourceUrl=url;
+    u.priceHistory[idx]=entry;
+    S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});
+    saveData();S.editPriceIdx=null;updateColBody();renderModal();
+  });
+  q('btn-cancel-edit-price')&&q('btn-cancel-edit-price').addEventListener('click',function(){S.editPriceIdx=null;renderModal();});
+  q('btn-sold-toggle')&&q('btn-sold-toggle').addEventListener('click',function(){S.draft.sold=!S.draft.sold;renderModal();});
+  // Dream card conversion
+  q('btn-start-convert')&&q('btn-start-convert').addEventListener('click',function(){
+    S.dreamConvert=true;S.convertDraft={code:'',img:null,price:'',date:new Date().toISOString().slice(0,10)};renderModal();
+  });
+  q('btn-cancel-convert')&&q('btn-cancel-convert').addEventListener('click',function(){
+    S.dreamConvert=false;S.convertDraft=null;renderModal();
+  });
+  // Conversion image upload
+  var convUp=q('convert-img-upload'),convInp=q('convert-img-input');
+  convUp&&convUp.addEventListener('click',function(e){if(e.target===convInp)return;convInp.click();});
+  convInp&&convInp.addEventListener('change',function(e){
+    var f=e.target.files[0];if(!f)return;
+    compressAndEdit(f,function(b64){S.convertDraft.img=b64;renderModal();});
+  });
+  q('btn-confirm-convert')&&q('btn-confirm-convert').addEventListener('click',function(){
+    var code=q('convert-code')?q('convert-code').value.trim():'';
+    var price=parseFloat(q('convert-price')?q('convert-price').value:0)||0;
+    var date=q('convert-date')?q('convert-date').value:new Date().toISOString().slice(0,10);
+    // Check code dupe in owned collection (temporarily set dreamView=false for check)
+    if(code){var prevDV=S.dreamView;S.dreamView=false;var dupe=findPsaDupe(code,card.id,card.gradingCo||'PSA');S.dreamView=prevDV;if(dupe){if(!confirm('⚠️ 같은 코드('+code+')가 내 컬렉션에 이미 있어요.\n('+dupe.name+')\n그래도 추가할까요?'))return;}}
+    var updated=JSON.parse(JSON.stringify(card));
+    updated.isDream=false;
+    updated.psaCode=code;
+    updated.img=S.convertDraft.img||null;
+    updated.purchasePrice=price;
+    updated.purchaseDate=date;
+    updated.createdAt=new Date().toISOString();
+    S.cards=S.cards.map(function(c){return c.id===card.id?updated:c;});
+    saveData();S.dreamConvert=false;S.convertDraft=null;
+    S.dreamView=false;// switch to owned collection
+    saveMeta();closeModal();renderContent();
+    setTimeout(function(){openModal(updated.id);},100);// open in owned collection
+  });
+}
+
+// ─── Content Render ───────────────────────────────────────────────────────────
+function renderContent(){
+  S.form=S.form||{name:'',img:null,reason:'',price:'',code:'',grade:'',tags:'',purchaseDate:''};
+  var content=document.getElementById('content');
+  content.innerHTML=S.tab==='collection'?buildCollectionHTML():buildAddFormHTML();
+  document.querySelectorAll('.nav-btn').forEach(function(btn){btn.classList.toggle('active',btn.dataset.tab===S.tab);});
+  if(S.tab==='collection'){var si=document.getElementById('search-inp');si&&si.addEventListener('input',function(){S.search=this.value;updateColBody();});bindColBodyEvents();}
+  else{bindAddForm();}
+}
+function bindAddForm(){
+  var imgUpload=document.getElementById('img-upload'),imgInput=document.getElementById('img-input');
+  imgUpload&&imgUpload.addEventListener('click',function(e){if(e.target===imgInput||e.target.id==='btn-change-add-img')return;imgInput.click();});
+  document.getElementById('btn-change-add-img')&&document.getElementById('btn-change-add-img').addEventListener('click',function(e){e.stopPropagation();imgInput.click();});
+  imgInput&&imgInput.addEventListener('change',function(e){var file=e.target.files[0];if(!file)return;syncForm();compressAndEdit(file,function(b64){S.form.img=b64;renderContent();});});
+  // Grading company change → reload grade options
+  var fCo=document.getElementById('f-grading-co');
+  function onCoChange(val){
+    S.form.gradingCo=val;S.form.grade='';
+    var sel=document.getElementById('f-grade');
+    if(sel)sel.innerHTML='<option value="">선택</option>'+getGrades(val).map(function(g){return'<option value="'+g.v+'">'+esc(g.label)+'</option>';}).join('');
+    updateCertPreview();
+  }
+  fCo&&fCo.addEventListener('change',function(e){onCoChange(e.target.value);});
+  fCo&&fCo.addEventListener('input',function(e){onCoChange(e.target.value);});
+  function updateCertPreview(){
+    var code=(document.getElementById('f-code')||{}).value||S.form.code||'';
+    var co=S.form.gradingCo||'PSA';
+    var ex=document.querySelector('.psa-preview');
+    if(!code.trim()){if(ex)ex.remove();return;}
+    var url=co==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+code:co==='BRG'?'https://break.co.kr/certification/'+code:'https://www.psacard.com/cert/'+code+'/psa';
+    var shortUrl=url.replace('https://','').substring(0,55);
+    if(ex){ex.href=url;var sp=ex.querySelectorAll('span');if(sp[1])sp[1].textContent=shortUrl;}
+    else{var el=document.createElement('a');el.className='psa-preview';el.href=url;el.target='_blank';el.innerHTML='<span>🔗</span><span>'+shortUrl+'</span>';var ci=document.getElementById('f-code');if(ci)ci.parentNode.insertBefore(el,ci.nextSibling);}
+  }
+  var fCode=document.getElementById('f-code');
+  fCode&&fCode.addEventListener('input',function(e){
+    S.form.code=e.target.value;updateCertPreview();
+    var dw=document.querySelector('.dupe-warn'),code=e.target.value.trim();
+    if(code){var curCo=S.form.gradingCo||'PSA';var dupe=findPsaDupe(code,null,curCo);if(dupe){if(!dw){var wd=document.createElement('div');wd.className='dupe-warn';wd.innerHTML='<span>⚠️</span><p>'+curCo+' 코드 '+esc(code)+'는 이미 등록된 카드예요.<br/><strong>'+esc(dupe.name)+'</strong></p>';var ci2=document.getElementById('f-code');if(ci2)ci2.parentNode.insertBefore(wd,ci2.nextSibling);}else{dw.innerHTML='<span>⚠️</span><p>'+curCo+' 코드 '+esc(code)+'는 이미 등록된 카드예요.<br/><strong>'+esc(dupe.name)+'</strong></p>';}}else if(dw){dw.remove();}}else if(dw){dw.remove();}
+  });
+  var fTags=document.getElementById('f-tags');
+  fTags&&fTags.addEventListener('input',function(e){S.form.tags=e.target.value;var chips=document.querySelector('.tag-chips'),tags=parseTags(e.target.value),html=tags.map(function(t){return'<span class="tag-chip">'+esc(t)+'</span>';}).join('');if(chips){chips.innerHTML=html;}else if(tags.length){var d=document.createElement('div');d.className='tag-chips';d.innerHTML=html;e.target.parentNode.appendChild(d);}});
+  document.getElementById('btn-add-card')&&document.getElementById('btn-add-card').addEventListener('click',function(){
+    syncForm();var name=S.form.name.trim();if(!name){alert('카드 이름을 입력해주세요.');return;}
+    if(S.form.code&&S.form.code.trim()){var dupe=findPsaDupe(S.form.code,null,S.form.gradingCo||'PSA');if(dupe){if(!confirm('⚠️ '+(S.form.gradingCo||'PSA')+' 코드 '+S.form.code+'는 이미 등록된 카드예요.\n('+dupe.name+')\n그래도 추가하겠어요?'))return;}}
+    var today=new Date().toISOString().slice(0,10);
+    var card={id:Date.now().toString(),name:name,img:S.form.img||null,gradingCo:S.form.gradingCo||'PSA',isDream:S.dreamView,purchaseReason:S.form.reason,
+      purchasePrice:S.dreamView?0:parseFloat(S.form.price)||0,
+      targetPrice:S.dreamView?parseFloat(S.form.targetPrice)||0:0,
+      purchaseDate:S.dreamView?'':S.form.purchaseDate||today,
+      psaCode:S.form.code,psaGrade:S.form.grade,tags:parseTags(S.form.tags),sold:false,salePrice:0,saleDate:'',priceHistory:[],createdAt:new Date().toISOString()};
+    S.cards.unshift(card);saveData();S.form={name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};S.tab='collection';renderContent();
+  });
+}
+
+// ─── Import modal ─────────────────────────────────────────────────────────────
+function openImportModal(cards){
+  importBuffer=cards;
+  document.getElementById('import-sub-text').textContent=cards.length+'장 · 카드마다 컬렉션/드림/제외를 선택하세요.';
+  document.getElementById('import-list').innerHTML=cards.map(function(card,i){
+    var dupeExisting=findPsaDupe(card.psaCode,null,card.gradingCo||'PSA');
+    var dupeBatch=findPsaDupeInList(card.psaCode,cards,i,card.gradingCo||'PSA');
+    var warnHtml='';
+    if(card.psaCode&&card.psaCode.trim()){
+      if(dupeExisting)warnHtml='<p class="import-item-warn">⚠️ 이미 보유 중 ('+esc(dupeExisting.name)+')</p>';
+      else if(dupeBatch)warnHtml='<p class="import-item-warn">⚠️ 파일 내 중복</p>';
+    }
+    var co3=card.gradingCo||'PSA';var gi3=gInfo(card.psaGrade,co3);
+    var gradeStr=card.psaGrade?(card.psaGrade==='RAW'?'RAW':co3+' '+card.psaGrade+(gi3?' '+gi3.short:'')):'등급 없음';
+    var imgEl=card.img?'<img src="'+card.img+'" alt="" onerror="this.style.display=\'none\'"/>':'<span style="font-size:20px;opacity:.3">🃏</span>';
+    // Default dest based on card's isDream field
+    var def=card.isDream?'dream':'main';
+    return'<div class="import-item">'+
+      '<div class="import-item-img">'+imgEl+'</div>'+
+      '<div class="import-item-info">'+
+        '<p class="import-item-name">'+esc(card.name)+'</p>'+
+        '<p class="import-item-sub">'+esc(gradeStr)+(card.purchasePrice?' · '+fmtW(card.purchasePrice):'')+(card.isDream?' · ⭐드림':'')+'</p>'+
+        warnHtml+'</div>'+
+      '<div class="dest-group" data-idx="'+i+'" data-dest="'+def+'">'+
+        '<button class="dest-btn'+(def==='main'?' main-active':'')+'" data-btn="main">📦</button>'+
+        '<button class="dest-btn'+(def==='dream'?' dream-active':'')+'" data-btn="dream">⭐</button>'+
+        '<button class="dest-btn'+(def==='skip'?' skip-active':'')+'" data-btn="skip">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  // Bind dest-btn clicks
+  document.querySelectorAll('.dest-group').forEach(function(grp){
+    grp.querySelectorAll('.dest-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        grp.querySelectorAll('.dest-btn').forEach(function(b){b.className='dest-btn';});
+        var d=btn.dataset.btn;
+        btn.className='dest-btn '+(d==='main'?'main-active':d==='dream'?'dream-active':'skip-active');
+        grp.dataset.dest=d;
+      });
+    });
+  });
+  document.getElementById('import-modal').style.display='flex';
+  history.pushState({overlay:'import'},'');
+}
+function closeImportModal(){document.getElementById('import-modal').style.display='none';}
+function getImportCards(){
+  var result=[];
+  document.querySelectorAll('.dest-group').forEach(function(grp){
+    var dest=grp.dataset.dest;
+    if(dest==='skip')return;
+    var card=JSON.parse(JSON.stringify(importBuffer[parseInt(grp.dataset.idx)]));
+    card.isDream=(dest==='dream');
+    result.push(card);
+  });
+  return result;
+}
+
+// ─── Sample cards ─────────────────────────────────────────────────────────────
+function addSampleCards(){
+  var samples=[
+    {name:'리자몽 VMAX RR',grade:'10',price:350000,code:'134932343',tags:['불타입','VMAX','희귀'],sold:true,salePrice:480000},
+    {name:'피카츄 V 풀아트',grade:'9',price:85000,code:'98765432',tags:['전기타입','풀아트'],sold:false},
+    {name:'뮤츠 Base Set Holo',grade:'8',price:1200000,code:'',tags:['초판','1세대','레어'],sold:false},
+    {name:'이브이 Heroes',grade:'RAW',price:15000,code:'',tags:['이브이','미채점'],sold:false},
+    {name:'파이리 1st Edition',grade:'7',price:280000,code:'',tags:['1세대','초판'],sold:false}
+  ];
+  var now=Date.now();
+  var added=samples.map(function(s,i){
+    var base=new Date(now-Math.floor(Math.random()*15552000000));
+    var hist=[];for(var j=0;j<3;j++){hist.push({price:Math.round(s.price*(0.85+Math.random()*0.5)/1000)*1000,date:new Date(base.getTime()+j*2592000000).toISOString(),memo:['eBay 낙찰가','Google 검색','커뮤니티 거래'][j]});}
+    return{id:'s-'+now+'-'+i,name:s.name,img:null,gradingCo:'PSA',isDream:false,purchaseReason:'테스트용 샘플',purchasePrice:s.price,purchaseDate:base.toISOString().slice(0,10),psaCode:s.code||'',psaGrade:s.grade,tags:s.tags,sold:s.sold,salePrice:s.sold?s.salePrice:0,saleDate:s.sold?new Date().toISOString().slice(0,10):'',priceHistory:hist,createdAt:base.toISOString()};
+  });
+  S.cards=S.cards.concat(added);saveData();renderContent();document.getElementById('settings-overlay').style.display='none';alert(added.length+'개 샘플 카드가 추가됐어요! (판매완료 1장 포함)');
+}
+
+// ─── Global events ────────────────────────────────────────────────────────────
+document.getElementById('nav-collection').addEventListener('click',function(){S.tab='collection';renderContent();});
+document.getElementById('nav-add').addEventListener('click',function(){S.tab='add';renderContent();});
+document.getElementById('modal-close-btn').addEventListener('click',function(){history.back();});
+document.getElementById('modal-bg').addEventListener('click',function(){history.back();});
+document.getElementById('btn-settings').addEventListener('click',function(){
+  document.getElementById('settings-overlay').style.display='flex';
+  history.pushState({overlay:'settings'},'');
+});
+document.getElementById('settings-bg').addEventListener('click',function(){history.back();});
+function closeSettings(){
+  document.getElementById('settings-overlay').style.display='none';
+}
+
+// ─── Back button (Android) ────────────────────────────────────────────────────
+// Push a base state so popstate always has somewhere to land without closing the app
+history.replaceState({overlay:null},'');
+window.addEventListener('popstate',function(e){
+  var state=e.state||{};
+  if(document.getElementById('img-editor-overlay').style.display==='flex'){
+    ieClose();return;
+  }
+  if(document.getElementById('import-modal').style.display==='flex'){
+    closeImportModal();return;
+  }
+  if(document.getElementById('settings-overlay').style.display==='flex'){
+    closeSettings();return;
+  }
+  if(document.getElementById('modal-overlay').style.display==='flex'){
+    closeModal();return;
+  }
+  // Nothing open — re-push base state so back button doesn't exit on next press
+  // (gives one more press to actually exit, which feels natural)
+  if(state.overlay===null){
+    // Already at base — let the browser handle it (exit app)
+    return;
+  }
+  history.replaceState({overlay:null},'');
+});
+document.getElementById('btn-add-sample').addEventListener('click',addSampleCards);
+document.getElementById('btn-reset-all').addEventListener('click',function(){if(!confirm('⚠️ 정말 전체 초기화할까요?\n모든 카드가 삭제돼요. 되돌릴 수 없어요.'))return;if(!confirm('마지막 확인: 정말 모두 삭제할까요?'))return;S.cards=[];saveData();document.getElementById('settings-overlay').style.display='none';renderContent();alert('초기화 완료');});
+document.getElementById('btn-export').addEventListener('click',function(){if(!S.cards.length){alert('내보낼 카드가 없어요.');return;}var blob=new Blob([JSON.stringify(S.cards,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='card-collection-'+new Date().toISOString().slice(0,10)+'.json';a.click();});
+document.getElementById('btn-import-trigger').addEventListener('click',function(){document.getElementById('import-file-input').click();});
+document.getElementById('import-file-input').addEventListener('change',function(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){try{var imported=JSON.parse(ev.target.result);if(!Array.isArray(imported)){alert('올바른 컬렉션 파일이 아니에요.');return;}openImportModal(imported);}catch(err){alert('파일을 읽을 수 없어요.');}};reader.readAsText(file);e.target.value='';});
+document.getElementById('import-modal-bg').addEventListener('click',function(){history.back();});
+document.getElementById('btn-import-cancel').addEventListener('click',function(){history.back();});
+document.getElementById('btn-import-all-main').addEventListener('click',function(){
+  document.querySelectorAll('.dest-group').forEach(function(grp){
+    grp.querySelectorAll('.dest-btn').forEach(function(b){b.className='dest-btn';});
+    grp.querySelector('[data-btn="main"]').className='dest-btn main-active';grp.dataset.dest='main';
+  });
+});
+document.getElementById('btn-import-all-dream').addEventListener('click',function(){
+  document.querySelectorAll('.dest-group').forEach(function(grp){
+    grp.querySelectorAll('.dest-btn').forEach(function(b){b.className='dest-btn';});
+    grp.querySelector('[data-btn="dream"]').className='dest-btn dream-active';grp.dataset.dest='dream';
+  });
+});
+document.getElementById('btn-import-none').addEventListener('click',function(){
+  document.querySelectorAll('.dest-group').forEach(function(grp){
+    grp.querySelectorAll('.dest-btn').forEach(function(b){b.className='dest-btn';});
+    grp.querySelector('[data-btn="skip"]').className='dest-btn skip-active';grp.dataset.dest='skip';
+  });
+});
+document.getElementById('btn-import-merge').addEventListener('click',function(){
+  var sel=getImportCards();if(!sel.length){alert('선택된 카드가 없어요. (제외 외 항목을 선택해주세요)');return;}
+  S.cards=S.cards.concat(sel);saveData();closeImportModal();renderContent();
+  var mc=sel.filter(function(c){return!c.isDream;}).length;var dc=sel.filter(function(c){return c.isDream;}).length;
+  alert((mc?mc+'장 컬렉션':'')+((mc&&dc)?' + ':'')+( dc?dc+'장 드림카드':'')+(mc||dc?' 추가됐어요!':''));
+});
+
+
+// ─── Image Editor ──────────────────────────────────────────────────────────────
+var IE={
+  src:null, onDone:null,
+  canvas:null, ctx:null, offscreen:null, offCtx:null,
+  scale:1, offX:0, offY:0,
+  blurBoxes:[], activeBox:-1, dragMode:null, dragStart:null,
+  blurLevel:8, history:[],
+  _newBox:null, dragging:false, dragOrigin:null
+};
+
+function ieInit(){
+  IE.canvas=document.getElementById('ie-canvas');
+  IE.ctx=IE.canvas.getContext('2d');
+  ieBindEvents();
+}
+
+function ieOpen(src,onDone){
+  IE.src=src;IE.onDone=onDone;IE.blurBoxes=[];IE.activeBox=-1;IE.history=[];IE.dragging=false;IE.dragMode=null;
+  document.getElementById('img-editor-overlay').style.display='flex';
+  history.pushState({overlay:'editor'},'');
+  var img=new Image();
+  img.onload=function(){
+    IE.offscreen=document.createElement('canvas');
+    IE.offscreen.width=img.naturalWidth;IE.offscreen.height=img.naturalHeight;
+    IE.offCtx=IE.offscreen.getContext('2d');
+    IE.offCtx.drawImage(img,0,0);
+    ieRedraw();
+  };
+  img.src=src;
+}
+
+function ieClose(){document.getElementById('img-editor-overlay').style.display='none';}
+
+function ieRedraw(){
+  var wrap=document.getElementById('ie-canvas-wrap');
+  var maxW=wrap.clientWidth,maxH=wrap.clientHeight;
+  var iw=IE.offscreen.width,ih=IE.offscreen.height;
+  IE.scale=Math.min(maxW/iw,maxH/ih,1);
+  var cw=Math.round(iw*IE.scale),ch=Math.round(ih*IE.scale);
+  IE.canvas.width=cw;IE.canvas.height=ch;
+  IE.canvas.style.marginLeft=Math.round((maxW-cw)/2)+'px';
+  IE.canvas.style.marginTop=Math.round((maxH-ch)/2)+'px';
+  var ctx=IE.ctx;
+  ctx.clearRect(0,0,cw,ch);
+  ctx.drawImage(IE.offscreen,0,0,cw,ch);
+  // Draw blur box previews
+  IE.blurBoxes.forEach(function(b,i){
+    var x=b.x*IE.scale,y=b.y*IE.scale,w=b.w*IE.scale,h=b.h*IE.scale;
+    ctx.save();ctx.filter='blur('+IE.blurLevel+'px)';
+    ctx.drawImage(IE.offscreen,b.x,b.y,b.w,b.h,x,y,w,h);
+    ctx.restore();
+    ctx.strokeStyle=i===IE.activeBox?'#a78bfa':'rgba(167,139,250,.5)';
+    ctx.lineWidth=i===IE.activeBox?2:1;ctx.setLineDash([4,3]);
+    ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
+    if(i===IE.activeBox){
+      [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(function(pt){
+        ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.arc(pt[0],pt[1],6,0,Math.PI*2);ctx.fill();
+      });
+    }
+  });
+  // Preview new box being drawn
+  if(IE.dragging&&IE._newBox&&IE._newBox.w>2&&IE._newBox.h>2){
+    var nb=IE._newBox;
+    ctx.strokeStyle='rgba(167,139,250,.7)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.strokeRect(nb.x*IE.scale,nb.y*IE.scale,nb.w*IE.scale,nb.h*IE.scale);ctx.setLineDash([]);
+  }
+}
+
+function iePointerPos(e){
+  var rect=IE.canvas.getBoundingClientRect();
+  var src=e.touches?e.touches[0]:e;
+  return{x:(src.clientX-rect.left)/IE.scale, y:(src.clientY-rect.top)/IE.scale};
+}
+
+function ieHitHandle(px,py){
+  if(IE.activeBox<0)return-1;
+  var b=IE.blurBoxes[IE.activeBox];
+  var corners=[[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]];
+  var threshold=14/IE.scale;
+  for(var i=0;i<corners.length;i++){
+    if(Math.abs(corners[i][0]-px)<threshold&&Math.abs(corners[i][1]-py)<threshold)return i;
+  }
+  return-1;
+}
+
+function ieHitBox(px,py){
+  for(var i=IE.blurBoxes.length-1;i>=0;i--){
+    var b=IE.blurBoxes[i];
+    if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h)return i;
+  }
+  return-1;
+}
+
+function ieOnDown(e){
+  e.preventDefault();
+  var p=iePointerPos(e);
+  var iw=IE.offscreen.width,ih=IE.offscreen.height;
+  // Check corner handle first
+  var handle=ieHitHandle(p.x,p.y);
+  if(handle>=0){
+    IE.dragMode='resize';
+    IE.dragStart={x:p.x,y:p.y,handle:handle,box:JSON.parse(JSON.stringify(IE.blurBoxes[IE.activeBox]))};
+    return;
+  }
+  // Check box hit
+  var hit=ieHitBox(p.x,p.y);
+  if(hit>=0){
+    IE.activeBox=hit;IE.dragMode='move';
+    IE.dragStart={x:p.x,y:p.y,box:JSON.parse(JSON.stringify(IE.blurBoxes[hit]))};
+    ieRedraw();return;
+  }
+  // New box draw
+  if(p.x>=0&&p.x<=iw&&p.y>=0&&p.y<=ih){
+    IE.dragging=true;IE.dragMode='new';
+    IE.dragStart={x:Math.max(0,Math.min(p.x,iw)),y:Math.max(0,Math.min(p.y,ih))};
+    IE.activeBox=-1;IE._newBox=null;
+  }
+}
+
+function ieOnMove(e){
+  e.preventDefault();
+  var p=iePointerPos(e);
+  var iw=IE.offscreen.width,ih=IE.offscreen.height;
+  if(IE.dragMode==='move'&&IE.dragStart){
+    var dx=p.x-IE.dragStart.x,dy=p.y-IE.dragStart.y;
+    var ob=IE.dragStart.box,nb=IE.blurBoxes[IE.activeBox];
+    nb.x=Math.max(0,Math.min(iw-ob.w,ob.x+dx));
+    nb.y=Math.max(0,Math.min(ih-ob.h,ob.y+dy));
+    ieRedraw();
+  }else if(IE.dragMode==='resize'&&IE.dragStart){
+    var ob2=IE.dragStart.box,nb2=IE.blurBoxes[IE.activeBox],h2=IE.dragStart.handle;
+    var nx=ob2.x,ny=ob2.y,nw=ob2.w,nh=ob2.h;
+    if(h2===0){nx=Math.min(p.x,ob2.x+ob2.w-10);ny=Math.min(p.y,ob2.y+ob2.h-10);nw=ob2.x+ob2.w-nx;nh=ob2.y+ob2.h-ny;}
+    else if(h2===1){nw=Math.max(10,p.x-ob2.x);ny=Math.min(p.y,ob2.y+ob2.h-10);nh=ob2.y+ob2.h-ny;}
+    else if(h2===2){nx=Math.min(p.x,ob2.x+ob2.w-10);nw=ob2.x+ob2.w-nx;nh=Math.max(10,p.y-ob2.y);}
+    else{nw=Math.max(10,p.x-ob2.x);nh=Math.max(10,p.y-ob2.y);}
+    nb2.x=Math.max(0,nx);nb2.y=Math.max(0,ny);nb2.w=nw;nb2.h=nh;
+    ieRedraw();
+  }else if(IE.dragMode==='new'&&IE.dragStart){
+    var sx=IE.dragStart.x,sy=IE.dragStart.y;
+    var x=Math.max(0,Math.min(sx,p.x)),y=Math.max(0,Math.min(sy,p.y));
+    var w=Math.min(Math.abs(p.x-sx),iw-x),h=Math.min(Math.abs(p.y-sy),ih-y);
+    IE._newBox={x:x,y:y,w:Math.max(1,w),h:Math.max(1,h)};
+    ieRedraw();
+  }
+}
+
+function ieOnUp(e){
+  e.preventDefault();
+  if(IE.dragMode==='new'&&IE._newBox&&IE._newBox.w>8&&IE._newBox.h>8){
+    IE.blurBoxes.push(JSON.parse(JSON.stringify(IE._newBox)));
+    IE.activeBox=IE.blurBoxes.length-1;
+  }
+  IE._newBox=null;IE.dragging=false;IE.dragMode=null;IE.dragStart=null;
+  ieRedraw();
+}
+
+function ieApplyBlur(){
+  if(!IE.blurBoxes.length){alert('블러 박스를 먼저 추가해주세요.');return;}
+  IE.history.push(IE.offscreen.toDataURL());
+  IE.blurBoxes.forEach(function(b){
+    var tmp=document.createElement('canvas');tmp.width=Math.max(1,Math.round(b.w));tmp.height=Math.max(1,Math.round(b.h));
+    var tCtx=tmp.getContext('2d');
+    tCtx.filter='blur('+IE.blurLevel+'px)';
+    tCtx.drawImage(IE.offscreen,b.x,b.y,b.w,b.h,0,0,b.w,b.h);
+    IE.offCtx.drawImage(tmp,0,0,b.w,b.h,b.x,b.y,b.w,b.h);
+  });
+  IE.blurBoxes=[];IE.activeBox=-1;ie_redraw_safe();
+}
+
+function ie_redraw_safe(){try{ieRedraw();}catch(e){}}
+
+function ieUndo(){
+  if(!IE.history.length){alert('되돌릴 내용이 없어요.');return;}
+  var prev=IE.history.pop();
+  var img=new Image();
+  img.onload=function(){
+    IE.offscreen=document.createElement('canvas');IE.offscreen.width=img.naturalWidth;IE.offscreen.height=img.naturalHeight;
+    IE.offCtx=IE.offscreen.getContext('2d');IE.offCtx.drawImage(img,0,0);
+    IE.blurBoxes=[];IE.activeBox=-1;ie_redraw_safe();
+  };img.src=prev;
+}
+
+function ieDone(){
+  if(IE.blurBoxes.length)ieApplyBlur();
+  var out=IE.offscreen.toDataURL('image/jpeg',0.85);
+  ieClose();
+  if(IE.onDone)IE.onDone(out);
+}
+
+function ieBindEvents(){
+  var cv=IE.canvas;
+  cv.addEventListener('mousedown',ieOnDown);cv.addEventListener('mousemove',ieOnMove);cv.addEventListener('mouseup',ieOnUp);
+  cv.addEventListener('touchstart',ieOnDown,{passive:false});cv.addEventListener('touchmove',ieOnMove,{passive:false});cv.addEventListener('touchend',ieOnUp,{passive:false});
+  document.getElementById('ie-apply').addEventListener('click',ieApplyBlur);
+  document.getElementById('ie-undo').addEventListener('click',ieUndo);
+  document.getElementById('ie-reset').addEventListener('click',function(){
+    if(!confirm('모든 블러를 초기화할까요?'))return;
+    var img=new Image();img.onload=function(){
+      IE.offscreen=document.createElement('canvas');IE.offscreen.width=img.naturalWidth;IE.offscreen.height=img.naturalHeight;
+      IE.offCtx=IE.offscreen.getContext('2d');IE.offCtx.drawImage(img,0,0);
+      IE.history=[];IE.blurBoxes=[];IE.activeBox=-1;ie_redraw_safe();
+    };img.src=IE.src;
+  });
+  document.getElementById('ie-done').addEventListener('click',ieDone);
+  document.getElementById('ie-cancel').addEventListener('click',function(){history.back();});
+  document.getElementById('ie-blur-slider').addEventListener('input',function(){
+    IE.blurLevel=parseInt(this.value);document.getElementById('ie-blur-val').textContent=this.value;ieRedraw();
+  });
+  window.addEventListener('resize',function(){if(IE.offscreen)ie_redraw_safe();});
+}
+
+function openImageEditor(src,onDone){
+  if(!IE.canvas)ieInit();
+  ieOpen(src,onDone);
+}
+
+// ─── Hook editor into image upload flows ──────────────────────────────────────
+function compressAndEdit(file,onDone){
+  // compress first, then open editor
+  compress(file,function(b64){openImageEditor(b64,onDone);});
+}
+
+loadData();loadMeta();
+S.form={name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};
+setupPWA();
+renderContent();
+</script>
+  <!-- Image Editor -->
+  <div id="img-editor-overlay">
+    <div class="ie-header">
+      <button class="ie-btn" id="ie-cancel" style="flex:none;padding:6px 14px;font-size:12px">취소</button>
+      <span class="ie-title" id="ie-title">이미지 편집</span>
+      <button class="ie-btn confirm" id="ie-done" style="flex:none;padding:6px 14px;font-size:12px">완료</button>
+    </div>
+    <div style="display:flex;justify-content:center;padding:8px;background:#0a0a0a;flex-shrink:0">
+      <div style="font-size:12px;color:#a78bfa;font-weight:700;padding:6px 14px">🌫️ 블러박스 편집</div>
+    </div>
+    <div class="ie-canvas-wrap" id="ie-canvas-wrap">
+      <canvas id="ie-canvas"></canvas>
+    </div>
+    <div class="ie-bottom">
+      <div class="ie-blur-ctrl" id="ie-blur-ctrl">
+        <span class="ie-blur-label">블러 강도</span>
+        <input type="range" class="ie-blur-slider" id="ie-blur-slider" min="2" max="20" value="8"/>
+        <span class="ie-blur-label" id="ie-blur-val">8</span>
+      </div>
+      <p class="ie-blur-hint" id="ie-hint">탭으로 박스 추가 · 드래그로 이동 · 모서리로 크기 조절</p>
+      <div class="ie-actions">
+        <button class="ie-btn danger" id="ie-reset">초기화</button>
+        <button class="ie-btn" id="ie-undo">↩ 되돌리기</button>
+        <button class="ie-btn confirm" id="ie-apply">적용</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
