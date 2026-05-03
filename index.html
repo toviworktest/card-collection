@@ -49,7 +49,8 @@ a{text-decoration:none;}
   .empty-state{padding:80px 28px!important;}
   .form-wrap{max-width:560px!important;margin:0 auto!important;padding-bottom:40px!important;}
   #modal-overlay{align-items:center!important;justify-content:center!important;}
-  .modal-sheet{max-width:560px!important;width:90%!important;border-radius:20px!important;max-height:90vh!important;margin:auto!important;transform:none!important;}
+  .modal-sheet{width:480px!important;max-width:92vw!important;border-radius:20px!important;max-height:90vh!important;margin:auto!important;transform:none!important;}
+  .modal-img-inner{width:200px!important;height:280px!important;}
   .modal-handle{display:none!important;}
   #settings-overlay{align-items:center!important;justify-content:center!important;}
   .settings-sheet{max-width:420px!important;width:90%!important;border-radius:20px!important;margin:auto!important;max-height:90vh!important;}
@@ -289,7 +290,9 @@ textarea.inp{resize:none;}
       <div class="logo">⚡</div>
       <h1>카드 컬렉션</h1>
     </div>
+    <span id="gh-status" style="font-size:10px;color:#6b7280;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px"></span>
     <div class="hdr-right">
+      <button class="btn-sm" id="btn-sync-header" title="GitHub 동기화">☁️</button>
       <button class="btn-sm" id="btn-export">내보내기</button>
       <button class="btn-sm" id="btn-import-trigger">불러오기</button>
       <button class="btn-sm" id="btn-settings">⚙️</button>
@@ -321,9 +324,40 @@ textarea.inp{resize:none;}
     <div class="modal-dimmer" id="settings-bg"></div>
     <div id="settings-sheet">
       <div class="modal-handle"><div class="handle-bar"></div></div>
-      <p class="settings-title">⚙️ 도구 & 설정</p>
+      <p class="settings-title">☁️ GitHub 동기화</p>
+      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:10px">
+        <div><p class="settings-item-label">Personal Access Token</p><p class="settings-item-sub">GitHub에서 발급받은 토큰을 입력해요. 한 번만 입력하면 기억해요.</p></div>
+        <div style="display:flex;gap:8px;width:100%">
+          <input id="gh-token-input" type="password" class="inp" placeholder="ghp_xxxxxxxxxx" style="flex:1;font-size:13px;padding:9px 12px"/>
+          <button class="btn-sm" id="btn-gh-connect" style="white-space:nowrap;padding:6px 14px">연결</button>
+        </div>
+        <p id="gh-settings-status" style="font-size:11px;margin:0;color:#6b7280"></p>
+      </div>
+      <div class="settings-item"><div><p class="settings-item-label">수동 동기화</p><p class="settings-item-sub">업로드/다운로드를 직접 선택해요</p></div><button class="btn-sm" id="btn-gh-sync">동기화</button></div>
+      <div class="settings-item"><div><p class="settings-item-label" style="color:#f87171">연결 해제</p><p class="settings-item-sub">토큰을 삭제해요. 로컬 데이터는 유지돼요.</p></div><button class="btn-sm" id="btn-gh-disconnect" style="border-color:#7f1d1d;color:#f87171">해제</button></div>
+      <p class="settings-title" style="margin-top:4px">⚙️ 도구 & 설정</p>
       <div class="settings-item"><div><p class="settings-item-label">샘플 카드 추가</p><p class="settings-item-sub">테스트용 샘플 카드 5장을 추가해요</p></div><button class="btn-sm" id="btn-add-sample">추가하기</button></div>
       <div class="settings-item"><div><p class="settings-item-label" style="color:#f87171">전체 초기화</p><p class="settings-item-sub">모든 카드 데이터를 삭제해요</p></div><button class="btn-sm" id="btn-reset-all" style="border-color:#7f1d1d;color:#f87171">초기화</button></div>
+    </div>
+  </div>
+  <!-- GitHub 동기화 방향 선택 모달 -->
+  <div id="sync-modal" style="position:fixed;inset:0;z-index:65;display:none;flex-direction:column;justify-content:flex-end;">
+    <div class="modal-dimmer" id="sync-modal-bg"></div>
+    <div style="position:relative;background:#0a0f1a;border-radius:24px 24px 0 0;padding:20px;padding-bottom:calc(24px + env(safe-area-inset-bottom));z-index:10;border-top:1px solid #1f2937;">
+      <div class="modal-handle"><div class="handle-bar"></div></div>
+      <p class="settings-title" style="margin-bottom:4px">☁️ GitHub 동기화</p>
+      <p style="font-size:11px;color:#6b7280;margin-bottom:16px">어떤 방향으로 동기화할지 선택해요</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button id="btn-sync-upload" style="background:#111827;border:1px solid #374151;border-radius:16px;padding:16px;text-align:left;cursor:pointer;width:100%">
+          <p style="font-size:14px;font-weight:700;color:#f59e0b;margin-bottom:4px">📤 업로드 — 기기 → GitHub</p>
+          <p id="sync-upload-desc" style="font-size:11px;color:#6b7280;line-height:1.4">현재 기기의 데이터를 GitHub에 저장해요</p>
+        </button>
+        <button id="btn-sync-download" style="background:#111827;border:1px solid #374151;border-radius:16px;padding:16px;text-align:left;cursor:pointer;width:100%">
+          <p style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:4px">📥 다운로드 — GitHub → 기기</p>
+          <p style="font-size:11px;color:#6b7280;line-height:1.4">GitHub의 카드를 선택해서 가져와요</p>
+        </button>
+        <button id="btn-sync-cancel" style="background:none;border:1px solid #1f2937;border-radius:16px;padding:12px;font-size:14px;color:#9ca3af;cursor:pointer;width:100%">취소</button>
+      </div>
     </div>
   </div>
   <div id="import-modal">
@@ -432,6 +466,156 @@ function certLabel(co){
 // ─── State ────────────────────────────────────────────────────────────────────
 var S={cards:[],tab:'collection',cols:2,cardId:null,editing:false,section:'info',addPrice:false,editPriceIdx:null,draft:null,search:'',sortBy:'createdAt',sortDir:'desc',filterSold:'all',chartMode:'labels',dreamView:false,dreamConvert:false,convertDraft:null};
 var importBuffer=[];
+
+
+// ─── GitHub Sync ──────────────────────────────────────────────────────────────
+var GH_OWNER='toviworktest';
+var GH_REPO='card-collection-save';
+var GH_FILE='cards.json';
+var GH_API='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+GH_FILE;
+var ghSyncing=false;
+
+function getGhToken(){return localStorage.getItem('gh-token')||'';}
+function setGhToken(t){if(t)localStorage.setItem('gh-token',t);else localStorage.removeItem('gh-token');}
+function getGhSha(){return localStorage.getItem('gh-sha')||'';}
+function setGhSha(s){if(s)localStorage.setItem('gh-sha',s);else localStorage.removeItem('gh-sha');}
+
+function setGhStatus(type,msg){
+  var el=document.getElementById('gh-status');
+  if(!el)return;
+  var map={ok:{icon:'☁️',color:'#34d399'},syncing:{icon:'🔄',color:'#f59e0b'},error:{icon:'⚠️',color:'#f87171'},none:{icon:'',color:'#6b7280'}};
+  var t=map[type]||map.none;
+  el.textContent=(t.icon?t.icon+' ':'')+msg;
+  el.style.color=t.color;
+}
+
+function jsonToB64(obj){
+  var str=JSON.stringify(obj);
+  var bytes=new TextEncoder().encode(str);
+  var bin='';bytes.forEach(function(b){bin+=String.fromCharCode(b);});
+  return btoa(bin);
+}
+function b64ToJson(b64){
+  var bin=atob(b64.replace(/[\n\r]/g,''));
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+// GitHub에서 카드 배열만 가져오기 (S.cards 변경 없음)
+// GitHub에서 카드 배열 가져오기
+// 반환값: null(에러) | 'NOT_FOUND'(파일 없음) | Array(카드 목록)
+async function fetchFromGitHub(){
+  var token=getGhToken();if(!token)return null;
+  setGhStatus('syncing','불러오는 중...');
+  try{
+    var headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'};
+    var res=await fetch(GH_API,{headers:headers});
+    if(res.status===404){setGhStatus('ok','연결됨 (첫 저장 전)');return 'NOT_FOUND';}
+    if(res.status===401){setGhStatus('error','토큰 오류 (401 — 토큰 재발급 필요)');return null;}
+    if(res.status===403){setGhStatus('error','접근 거부 (403 — 저장소 권한 확인)');return null;}
+    if(!res.ok){setGhStatus('error','불러오기 실패 ('+res.status+')');return null;}
+    var data=await res.json();
+    setGhSha(data.sha);
+
+    // content가 비어있으면 파일이 1MB 초과 → Blob API로 전체 내용 가져오기
+    var b64content=data.content&&data.content.trim()?data.content:null;
+    if(!b64content){
+      setGhStatus('syncing','대용량 파일 불러오는 중...');
+      var blobUrl='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/git/blobs/'+data.sha;
+      var blobRes=await fetch(blobUrl,{headers:headers});
+      if(!blobRes.ok){setGhStatus('error','대용량 불러오기 실패 ('+blobRes.status+')');return null;}
+      var blobData=await blobRes.json();
+      b64content=blobData.content;
+    }
+
+    try{
+      var decoded=b64ToJson(b64content);
+      if(!Array.isArray(decoded))decoded=[];
+      setGhStatus('ok','☁️ 연결됨 ('+decoded.length+'장)');
+      return decoded;
+    }catch(e){
+      console.error('[GitHub] 파싱 오류',e);
+      setGhStatus('error','파일 파싱 오류');
+      return null;
+    }
+  }catch(e){
+    var msg=e&&e.message?e.message:'오류';
+    setGhStatus('error','오류: '+msg);
+    console.error('[GitHub]',e);
+    return null;
+  }
+}
+
+// 앱 시작 시 자동 로드 — 404이면 로컬 데이터 보존, 파일이 있을 때만 덮어씀
+async function loadFromGitHub(){
+  var result=await fetchFromGitHub();
+  if(result===null)return false;
+  if(result==='NOT_FOUND')return true; // 파일 없음 → 로컬 데이터 그대로 유지
+  S.cards=result;
+  try{localStorage.setItem('cards-v5',JSON.stringify(S.cards));}catch(e){}
+  return true;
+}
+
+async function saveToGitHub(){
+  var token=getGhToken();if(!token)return false;
+  if(ghSyncing)return false;
+  ghSyncing=true;
+  setGhStatus('syncing','저장 중...');
+  try{
+    var content=jsonToB64(S.cards);
+    var sha=getGhSha();
+    var body={message:'카드 컬렉션 업데이트',content:content};
+    if(sha)body.sha=sha;
+    var res=await fetch(GH_API,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){
+      if(res.status===409||res.status===422){
+        var reFetch=await fetch(GH_API,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+        if(reFetch.ok){var rData=await reFetch.json();setGhSha(rData.sha);}
+        setGhStatus('error','충돌 — 다시 시도해주세요');
+      }else{
+        setGhStatus('error','저장 실패 ('+res.status+')');
+      }
+      ghSyncing=false;return false;
+    }
+    var ok=await res.json();
+    setGhSha(ok.content.sha);
+    setGhStatus('ok','저장 완료 ('+S.cards.length+'장)');
+    ghSyncing=false;return true;
+  }catch(e){
+    var msg=e&&e.message?e.message:'오류';
+    setGhStatus('error','저장 오류: '+msg);
+    ghSyncing=false;return false;
+  }
+}
+
+function openSyncModal(){
+  if(!getGhToken()){alert('⚙️ 설정에서 GitHub 토큰을 먼저 연결해주세요.');return;}
+  var ud=document.getElementById('sync-upload-desc');
+  if(ud)ud.textContent='현재 카드 '+S.cards.length+'장을 GitHub에 저장해요';
+  document.getElementById('sync-modal').style.display='flex';
+  history.pushState({overlay:'sync'},'');
+}
+function closeSyncModal(){document.getElementById('sync-modal').style.display='none';}
+
+async function initGitHub(){
+  if(!getGhToken()){setGhStatus('none','');return;}
+  // 앱 시작 시에는 연결 상태만 확인 — 자동 다운로드 하지 않음
+  // (로컬 수정사항 보호. 동기화는 ☁️ 버튼으로만)
+  var token=getGhToken();
+  try{
+    var res=await fetch(GH_API,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+    if(res.status===401||res.status===403){setGhStatus('error','토큰 오류');return;}
+    if(res.status===404){setGhStatus('ok','☁️ 연결됨 (첫 저장 전)');return;}
+    if(res.ok){
+      var data=await res.json();
+      setGhSha(data.sha); // SHA 갱신 (업로드 충돌 방지용)
+      setGhStatus('ok','☁️ 연결됨');
+    }else{
+      setGhStatus('error','연결 확인 실패');
+    }
+  }catch(e){setGhStatus('error','연결 확인 오류');}
+}
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 function saveData(){try{localStorage.setItem('cards-v5',JSON.stringify(S.cards));}catch(e){alert('저장 실패');}}
@@ -1263,7 +1447,67 @@ document.getElementById('nav-collection').addEventListener('click',function(){S.
 document.getElementById('nav-add').addEventListener('click',function(){S.tab='add';renderContent();});
 document.getElementById('modal-close-btn').addEventListener('click',function(){history.back();});
 document.getElementById('modal-bg').addEventListener('click',function(){history.back();});
+// ─── GitHub Sync events ───────────────────────────────────────────────────────
+document.getElementById('btn-sync-header').addEventListener('click',openSyncModal);
+document.getElementById('sync-modal-bg').addEventListener('click',function(){history.back();});
+document.getElementById('btn-sync-cancel').addEventListener('click',function(){history.back();});
+document.getElementById('btn-sync-upload').addEventListener('click',function(){
+  history.back();
+  setTimeout(function(){
+    if(!S.cards.length){
+      if(!confirm('⚠️ 현재 기기에 카드가 0장입니다.\n이 상태로 업로드하면 GitHub의 기존 데이터가 삭제돼요.\n정말 업로드할까요?'))return;
+    }else{
+      if(!confirm('📤 현재 카드 '+S.cards.length+'장을 GitHub에 저장할게요.\nGitHub에 이미 저장된 데이터는 덮어써져요.\n계속할까요?'))return;
+    }
+    saveToGitHub().then(function(ok){
+      alert(ok?'☁️ 업로드 완료 — '+S.cards.length+'장 저장됐어요.':'❌ 업로드 실패\n헤더 상태 메시지를 확인해주세요.');
+    });
+  },100);
+});
+document.getElementById('btn-sync-download').addEventListener('click',function(){
+  history.back();
+  setTimeout(function(){
+    fetchFromGitHub().then(function(result){
+      if(result===null){alert('❌ GitHub 연결 실패\n헤더 상태 메시지를 확인해주세요.');return;}
+      if(result==='NOT_FOUND'){alert('⚠️ GitHub에 저장된 파일이 없어요.\n☁️ → 업로드를 먼저 해주세요.');return;}
+      if(!result.length){alert('⚠️ GitHub에 카드가 0장 저장되어 있어요.\n로컬에서 카드 추가 후 업로드해주세요.');return;}
+      openImportModal(result);
+    });
+  },100);
+});
+document.getElementById('btn-gh-connect').addEventListener('click',function(){
+  var token=document.getElementById('gh-token-input').value.trim();
+  if(!token){alert('토큰을 입력해주세요.');return;}
+  var st=document.getElementById('gh-settings-status');
+  st.textContent='연결 확인 중...';st.style.color='#f59e0b';
+  setGhToken(token);
+  fetchFromGitHub().then(function(result){
+    if(result!==null){
+      st.textContent='✅ 연결 성공!';st.style.color='#34d399';
+      document.getElementById('gh-token-input').value='';
+      document.getElementById('gh-token-input').placeholder='토큰 설정됨';
+    }else{
+      var ghEl=document.getElementById('gh-status');
+      st.textContent='❌ 연결 실패 — '+(ghEl?ghEl.textContent:'');st.style.color='#f87171';
+      setGhToken('');
+    }
+  });
+});
+document.getElementById('btn-gh-sync').addEventListener('click',function(){
+  document.getElementById('settings-overlay').style.display='none';
+  openSyncModal();
+});
+document.getElementById('btn-gh-disconnect').addEventListener('click',function(){
+  if(!confirm('GitHub 연결을 해제할까요?\n로컬 데이터는 유지돼요.'))return;
+  setGhToken('');setGhSha('');setGhStatus('none','');
+  var st=document.getElementById('gh-settings-status');
+  st.textContent='연결 해제됨';st.style.color='#6b7280';
+  document.getElementById('gh-token-input').placeholder='ghp_xxxxxxxxxx';
+});
+
 document.getElementById('btn-settings').addEventListener('click',function(){
+  var st=document.getElementById('gh-settings-status'),inp=document.getElementById('gh-token-input');
+  if(getGhToken()){if(st)st.textContent='✅ 연결됨';if(inp){inp.value='';inp.placeholder='토큰 설정됨 (변경하려면 새로 입력)';}}else{if(st)st.textContent='';if(inp){inp.value='';inp.placeholder='ghp_xxxxxxxxxx';}}
   document.getElementById('settings-overlay').style.display='flex';
   history.pushState({overlay:'settings'},'');
 });
@@ -1279,6 +1523,9 @@ window.addEventListener('popstate',function(e){
   var state=e.state||{};
   if(document.getElementById('img-editor-overlay').style.display==='flex'){
     ieClose();return;
+  }
+  if(document.getElementById('sync-modal').style.display==='flex'){
+    closeSyncModal();return;
   }
   if(document.getElementById('import-modal').style.display==='flex'){
     closeImportModal();return;
@@ -1584,6 +1831,7 @@ loadData();loadMeta();
 S.form={name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};
 setupPWA();
 renderContent();
+initGitHub();
 </script>
   <!-- Image Editor -->
   <div id="img-editor-overlay">
