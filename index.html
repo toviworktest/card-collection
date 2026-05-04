@@ -490,7 +490,7 @@ function certLabel(co){
 
 
 // ─── State ────────────────────────────────────────────────────────────────────
-var S={cards:[],tab:'collection',cols:2,cardId:null,editing:false,section:'info',addPrice:false,editPriceIdx:null,draft:null,search:'',sortBy:'createdAt',sortDir:'desc',filterSold:'all',chartMode:'labels',dreamView:false,dreamConvert:false,convertDraft:null};
+var S={cards:[],tab:'collection',cols:2,cardId:null,editing:false,section:'info',addPrice:false,editPriceIdx:null,draft:null,search:'',sortBy:'createdAt',sortDir:'desc',filterSold:'all',chartMode:'labels',dreamView:false,dreamConvert:false,convertDraft:null,showCardOnly:false};
 var importBuffer=[];
 
 
@@ -651,6 +651,33 @@ function loadMeta(){try{var m=JSON.parse(localStorage.getItem('cards-meta5')||'{
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 function fmtW(n){var v=parseFloat(n);if(isNaN(v)||v===0)return'-';return'₩'+Math.round(v).toLocaleString('ko-KR');}
+
+// ─── Comma input helpers ───────────────────────────────────────────────────────
+function toComma(v){var n=String(v||'').replace(/[^0-9]/g,'');return n?parseInt(n,10).toLocaleString('ko-KR'):'';}
+function fromComma(v){return parseFloat(String(v||'').replace(/,/g,''))||0;}
+function applyComma(el){
+  if(!el)return;
+  el.addEventListener('input',function(){
+    var pos=el.selectionStart;
+    var raw=el.value.replace(/[^0-9]/g,'');
+    var formatted=raw?parseInt(raw,10).toLocaleString('ko-KR'):'';
+    var beforeCommas=el.value.slice(0,pos).replace(/,/g,'').length;
+    el.value=formatted;
+    // Restore cursor
+    var count=0,newPos=0;
+    for(var i=0;i<formatted.length;i++){
+      if(formatted[i]!==',')count++;
+      if(count===beforeCommas){newPos=i+1;break;}
+    }
+    if(!raw)newPos=0;
+    el.setSelectionRange(newPos,newPos);
+  });
+}
+function bindAllCommaInputs(){
+  document.querySelectorAll('.inp-comma, #new-price-inp, #new-price-ship, #new-price-fee, #ep-val, #ep-ship, #ep-fee, #f-price, #f-target-price, #d-price, #d-target-price, #d-sale-price, #convert-price').forEach(function(el){
+    if(!el._commabound){el._commabound=true;applyComma(el);}
+  });
+}
 function fmtDt(s){return new Date(s).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
 function fmtDate(s){return new Date(s).toLocaleDateString('ko-KR',{month:'short',day:'numeric'});}
 function fmtFull(s){if(!s)return'-';return new Date(s).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});}
@@ -658,7 +685,7 @@ function fmtK(n){n=Math.round(n);if(n>=100000000)return(n/100000000).toFixed(1)+
 function fmtChart(n){return Math.round(n).toLocaleString('ko-KR');}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function compress(file,cb){var r=new FileReader();r.onload=function(ev){var img=new Image();img.onload=function(){var MAX=650,ratio=Math.min(MAX/img.width,MAX/img.height,1);var c=document.createElement('canvas');c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.78));};img.src=ev.target.result;};r.readAsDataURL(file);}
-function syncForm(){var g=function(id){return document.getElementById(id);};var f=S.form;if(g('f-name'))f.name=g('f-name').value;if(g('f-grading-co'))f.gradingCo=g('f-grading-co').value;if(g('f-grade'))f.grade=g('f-grade').value;if(g('f-code'))f.code=g('f-code').value;if(g('f-price'))f.price=g('f-price').value;if(g('f-target-price'))f.targetPrice=g('f-target-price').value;if(g('f-reason'))f.reason=g('f-reason').value;if(g('f-tags'))f.tags=g('f-tags').value;if(g('f-date')&&!S.dreamView)f.purchaseDate=g('f-date').value;}
+function syncForm(){var g=function(id){return document.getElementById(id);};var f=S.form;if(g('f-name'))f.name=g('f-name').value;if(g('f-grading-co'))f.gradingCo=g('f-grading-co').value;if(g('f-grade'))f.grade=g('f-grade').value;if(g('f-code'))f.code=g('f-code').value;if(g('f-price'))f.price=fromComma(g('f-price').value);if(g('f-target-price'))f.targetPrice=fromComma(g('f-target-price').value);if(g('f-reason'))f.reason=g('f-reason').value;if(g('f-tags'))f.tags=g('f-tags').value;if(g('f-date')&&!S.dreamView)f.purchaseDate=g('f-date').value;}
 function parseTags(str){return String(str||'').split(',').map(function(t){return t.trim();}).filter(function(t){return t.length>0;});}
 function getLatestPrice(card){
   var h=card.priceHistory||[];
@@ -739,15 +766,19 @@ function setupPWA(){
 
 // ─── SVG Chart ────────────────────────────────────────────────────────────────
 function drawChart(history,buyPrice,salePrice,isSold,mode,soldRefs,opts){
-  // opts: {isDream, targetPrice}
   var isDream=opts&&opts.isDream;
   var targetPrice=opts&&opts.targetPrice||0;
-  var hasH=history&&history.length>0;
+  var showCardOnly=opts&&opts.showCardOnly;
+  // Use cardPrice when showCardOnly, else use full price
+  var effectiveHistory=history?history.map(function(p){
+    return showCardOnly&&p.cardPrice?Object.assign({},p,{price:p.cardPrice}):p;
+  }):history;
+  var hasH=effectiveHistory&&effectiveHistory.length>0;
   var hasSR=soldRefs&&soldRefs.length>0;
   if(!hasH&&!buyPrice&&!hasSR)return'';
   var W=Math.min(window.innerWidth-40,400),H=175;var PL=8,PR=8,PT=30,PB=34;var iw=W-PL-PR,ih=H-PT-PB;
   var all=[];
-  if(hasH)history.forEach(function(p){all.push(p.price);});
+  if(hasH)effectiveHistory.forEach(function(p){all.push(p.price);});
   if(buyPrice)all.push(buyPrice);if(isSold&&salePrice)all.push(salePrice);
   if(hasSR)soldRefs.forEach(function(p){all.push(p.price);});
   if(isDream&&targetPrice)all.push(targetPrice);
@@ -756,7 +787,7 @@ function drawChart(history,buyPrice,salePrice,isSold,mode,soldRefs,opts){
   var pad=(maxP-minP)*0.22||maxP*0.18||500;minP-=pad;maxP+=pad;var range=maxP-minP;
   function py(p){return PT+(1-(p-minP)/range)*ih;}
   // Always date-based x — sort history by date first
-  var sortedH=hasH?history.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);}):[];
+  var sortedH=hasH?effectiveHistory.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);}):[];
   var allDates=[];
   if(hasH)sortedH.forEach(function(p){allDates.push(new Date(p.date).getTime());});
   if(hasSR)soldRefs.forEach(function(p){allDates.push(new Date(p.date).getTime());});
@@ -968,8 +999,8 @@ function buildAddFormHTML(){
     '<div class="field"><label class="lbl">인증 코드</label><input class="inp" id="f-code" type="number" placeholder="코드번호" value="'+esc(f.code)+'"/></div>'+
     dupeWarn+certPreview+
     (isDream?
-      '<div class="field"><label class="lbl">희망 목표가 (₩) — 이 가격이면 살게요</label><input class="inp" id="f-target-price" type="number" placeholder="예: 300000" value="'+esc(f.targetPrice||'')+'"/></div>':
-      '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="f-price" type="number" placeholder="0" value="'+esc(f.price)+'"/></div>'+
+      '<div class="field"><label class="lbl">희망 목표가 (₩) — 이 가격이면 살게요</label><input class="inp" id="f-target-price" type="text" inputmode="numeric" placeholder="예: 300000" value="'+(f.targetPrice?toComma(f.targetPrice):'')+'""/></div>':
+      '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="f-price" type="text" inputmode="numeric" placeholder="0" value="'+toComma(f.price)+'""/></div>'+
       '<div class="field"><label class="lbl">매입 날짜</label><input class="inp" id="f-date" type="date" value="'+(f.purchaseDate||today)+'" max="'+today+'"/></div>'
     )+
     '<div class="field"><label class="lbl">태그 (쉼표로 구분)</label><input class="inp" id="f-tags" type="text" placeholder="희귀, 초판, 보류" value="'+esc(f.tags)+'"/>'+tagChips+'</div>'+
@@ -995,8 +1026,8 @@ function buildModalInfo(card,editing){
       '<div class="field"><label class="lbl">인증 코드</label><input class="inp" id="d-code" type="number" value="'+esc(d.psaCode||'')+'"/></div>'+
       '<div id="edit-dupe-warn"></div>'+
       (d.isDream?
-        '<div class="field"><label class="lbl">희망 목표가 (₩)</label><input class="inp" id="d-target-price" type="number" value="'+esc(String(d.targetPrice||''))+'" placeholder="이 가격이면 살게요"/></div>':
-        '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="d-price" type="number" value="'+esc(String(d.purchasePrice||''))+'"/></div>'+
+        '<div class="field"><label class="lbl">희망 목표가 (₩)</label><input class="inp" id="d-target-price" type="text" inputmode="numeric" value="'+(d.targetPrice?toComma(d.targetPrice):'')+'" placeholder="이 가격이면 살게요""/></div>':
+        '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="d-price" type="text" inputmode="numeric" value="'+(d.purchasePrice?toComma(d.purchasePrice):'')+'""/></div>'+
         '<div class="field"><label class="lbl">매입 날짜</label><input class="inp" id="d-date" type="date" value="'+esc(d.purchaseDate||'')+'"/></div>'
       )+
       '<div class="field"><label class="lbl">태그 (쉼표로 구분)</label><input class="inp" id="d-tags" value="'+esc(tagStr)+'"/></div>'+
@@ -1057,6 +1088,16 @@ function buildModalPrice(card){
     soldRefs.push({price:c.salePrice,date:c.saleDate,name:c.name});
   });
   var modeLabels={labels:'가격 표시',minmax:'최고/최저',off:'숨기기'};
+  // Check if any entry has fee breakdown
+  var hasFees=h.some(function(p){return p.cardPrice&&(p.shipping||p.fee);});
+  var feeToggle=hasFees?
+    '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:6px">'+
+      '<span style="font-size:10px;color:#6b7280">그래프 기준:</span>'+
+      '<div style="display:flex;background:#0d1117;border:1px solid #1f2937;border-radius:8px;padding:2px;gap:2px;">'+
+        '<button class="chart-mode-btn'+(S.showCardOnly?'':' active')+'" data-feetype="total" style="padding:3px 8px;font-size:9px;font-weight:600;border:none;border-radius:6px;cursor:pointer;background:'+(S.showCardOnly?'transparent':'#f59e0b')+';color:'+(S.showCardOnly?'#6b7280':'#000')+'">합산가</button>'+
+        '<button class="chart-mode-btn'+(S.showCardOnly?' active':'')+'" data-feetype="card" style="padding:3px 8px;font-size:9px;font-weight:600;border:none;border-radius:6px;cursor:pointer;background:'+(S.showCardOnly?'#60a5fa':'transparent')+';color:'+(S.showCardOnly?'#000':'#6b7280')+'">카드가격만</button>'+
+      '</div>'+
+    '</div>':'';
   var chartHtml=(h.length>=1||card.purchasePrice||soldRefs.length)?
     '<div class="chart-bar">'+
       '<span class="chart-bar-label">시세 그래프'+(soldRefs.length?' <span style="font-size:9px;color:#22c55e">◆ '+soldRefs.length+'건</span>':'')+'</span>'+
@@ -1066,7 +1107,8 @@ function buildModalPrice(card){
         }).join('')+
       '</div>'+
     '</div>'+
-    '<div class="chart-wrap">'+drawChart(h,card.isDream?0:card.purchasePrice,card.salePrice,card.sold,S.chartMode,soldRefs,{isDream:!!card.isDream,targetPrice:card.targetPrice||0})+'</div>':'';
+    feeToggle+
+    '<div class="chart-wrap">'+drawChart(h,card.isDream?0:card.purchasePrice,card.salePrice,card.sold,S.chartMode,soldRefs,{isDream:!!card.isDream,targetPrice:card.targetPrice||0,showCardOnly:S.showCardOnly})+'</div>':'';
   var customUrl=card.customPriceUrl||'';
   var mktLinks='<div class="market-links">'+
     '<a href="'+esc(ebayUrl(card))+'" target="_blank" class="market-btn">🛒 eBay</a>'+
@@ -1080,15 +1122,41 @@ function buildModalPrice(card){
       '<button id="btn-save-custom-url" style="background:#1f2937;border:1px solid #374151;border-radius:10px;padding:8px 12px;font-size:12px;color:#9ca3af;cursor:pointer;white-space:nowrap;flex-shrink:0">저장</button>'+
     '</div>';
   var addForm=S.addPrice?
-    '<div class="price-form-box"><div class="price-form-inputs"><input class="inp-sm" id="new-price-inp" type="number" placeholder="시세 (₩)"/><input class="inp-sm" id="new-price-date" type="datetime-local" value="'+nowDTL()+'" max="'+nowDTL()+'"/></div><input class="inp-sm" id="new-price-memo" placeholder="📝 출처 메모 (예: eBay 낙찰가)"/><div class="price-url-row"><input class="inp-sm price-url-inp" id="new-price-url" type="url" placeholder="🔗 출처 링크 (선택)"/></div><div class="price-form-btns"><button class="btn-ghost" id="btn-cancel-price" style="padding:10px;font-size:13px">취소</button><button class="btn-gold" id="btn-confirm-price" style="padding:10px;font-size:13px">추가</button></div></div>':
+    '<div class="price-form-box">'+
+      '<div class="price-form-inputs"><input class="inp-sm" id="new-price-inp" type="text" inputmode="numeric" placeholder="카드 가격 (₩)" oninput="updatePriceSum()"/><input class="inp-sm" id="new-price-date" type="datetime-local" value="'+nowDTL()+'" max="'+nowDTL()+'"/></div>'+
+      '<div class="price-form-inputs">'+
+        '<input class="inp-sm" id="new-price-ship" type="text" inputmode="numeric" placeholder="배송비 (₩)" oninput="updatePriceSum()"/>'+
+        '<input class="inp-sm" id="new-price-fee" type="text" inputmode="numeric" placeholder="기타수수료 (₩)" oninput="updatePriceSum()"/>'+
+      '</div>'+
+      '<div id="new-price-sum" style="font-size:11px;color:#f59e0b;text-align:right;min-height:16px"></div>'+
+      '<input class="inp-sm" id="new-price-memo" placeholder="📝 출처 메모 (예: eBay 낙찰가)"/>'+
+      '<div class="price-url-row"><input class="inp-sm price-url-inp" id="new-price-url" type="url" placeholder="🔗 출처 링크 (선택)"/></div>'+
+      '<div class="price-form-btns"><button class="btn-ghost" id="btn-cancel-price" style="padding:10px;font-size:13px">취소</button><button class="btn-gold" id="btn-confirm-price" style="padding:10px;font-size:13px">추가</button></div>'+
+    '</div>':
     '<button class="btn-ghost" id="btn-open-add-price" style="margin-bottom:12px">+ 직접 시세 입력하기</button>';
   var listItems=h.length===0?'<p class="empty-price">아직 시세 기록이 없어요</p>':
     h.map(function(p,i){return{p:p,i:i};}).sort(function(a,b){return new Date(b.p.date)-new Date(a.p.date);}).map(function(item){var p=item.p,i=item.i;
       var isEdit=S.editPriceIdx===i;
       var srcBtn=p.sourceUrl?'<a href="'+esc(p.sourceUrl)+'" target="_blank" class="price-src-btn">🔗 <span>'+esc(p.sourceUrl.replace(/^https?:\/\//,'').slice(0,40))+'</span></a>':'';
       var memo=p.memo?'<p class="price-memo-text">📝 '+esc(p.memo)+'</p>':'';
-      var editSec=isEdit?'<div class="price-edit-section"><div class="price-form-inputs"><input class="inp-sm" id="ep-val" type="number" value="'+p.price+'"/><input class="inp-sm" id="ep-date" type="datetime-local" value="'+new Date(new Date(p.date)-new Date(p.date).getTimezoneOffset()*60000).toISOString().slice(0,16)+'" max="'+nowDTL()+'"/></div><input class="inp-sm" id="ep-memo" placeholder="출처 메모" value="'+esc(p.memo||'')+'"/><div class="price-url-row"><input class="inp-sm price-url-inp" id="ep-url" type="url" placeholder="🔗 출처 링크" value="'+esc(p.sourceUrl||'')+'"/></div><div class="price-form-btns"><button class="btn-ghost" id="btn-cancel-edit-price" style="padding:9px;font-size:13px">취소</button><button class="btn-gold" id="btn-save-price" data-idx="'+i+'" style="padding:9px;font-size:13px">저장</button></div></div>':'';
-      return'<div class="price-item"><div class="price-item-row"><div class="price-item-left"><p class="price-date">'+fmtDt(p.date)+'</p><p class="price-val">'+fmtW(p.price)+'</p>'+memo+srcBtn+'</div><div class="price-actions"><button class="btn-icon edit-price-btn" data-idx="'+i+'">✏️</button><button class="btn-icon del-price-btn" data-idx="'+i+'">🗑️</button></div></div>'+editSec+'</div>';
+      var breakdown=(p.cardPrice&&(p.shipping||p.fee))?
+        '<p style="font-size:10px;color:#6b7280;margin-top:2px">카드 '+fmtW(p.cardPrice)+(p.shipping?' + 배송 '+fmtW(p.shipping):'')+(p.fee?' + 수수료 '+fmtW(p.fee):'')+'</p>':'';
+      var editSec=isEdit?
+        '<div class="price-edit-section">'+
+          '<div class="price-form-inputs">'+
+            '<input class="inp-sm" id="ep-val" type="text" inputmode="numeric" value="'+(p.cardPrice||p.price)+'" placeholder="카드 가격" oninput="updateEditPriceSum()"/>'+
+            '<input class="inp-sm" id="ep-date" type="datetime-local" value="'+new Date(new Date(p.date)-new Date(p.date).getTimezoneOffset()*60000).toISOString().slice(0,16)+'" max="'+nowDTL()+'"/>'+
+          '</div>'+
+          '<div class="price-form-inputs">'+
+            '<input class="inp-sm" id="ep-ship" type="text" inputmode="numeric" value="'+(p.shipping||'')+'" placeholder="배송비 (₩)" oninput="updateEditPriceSum()"/>'+
+            '<input class="inp-sm" id="ep-fee" type="text" inputmode="numeric" value="'+(p.fee||'')+'" placeholder="기타수수료 (₩)" oninput="updateEditPriceSum()"/>'+
+          '</div>'+
+          '<div id="ep-sum" style="font-size:11px;color:#f59e0b;text-align:right;min-height:16px"></div>'+
+          '<input class="inp-sm" id="ep-memo" placeholder="출처 메모" value="'+esc(p.memo||'')+'"/>'+
+          '<div class="price-url-row"><input class="inp-sm price-url-inp" id="ep-url" type="url" placeholder="🔗 출처 링크" value="'+esc(p.sourceUrl||'')+'"/></div>'+
+          '<div class="price-form-btns"><button class="btn-ghost" id="btn-cancel-edit-price" style="padding:9px;font-size:13px">취소</button><button class="btn-gold" id="btn-save-price" data-idx="'+i+'" style="padding:9px;font-size:13px">저장</button></div>'+
+        '</div>':'';
+      return'<div class="price-item"><div class="price-item-row"><div class="price-item-left"><p class="price-date">'+fmtDt(p.date)+'</p><p class="price-val">'+fmtW(p.price)+'</p>'+breakdown+memo+srcBtn+'</div><div class="price-actions"><button class="btn-icon edit-price-btn" data-idx="'+i+'">✏️</button><button class="btn-icon del-price-btn" data-idx="'+i+'">🗑️</button></div></div>'+editSec+'</div>';
     }).join('');
   return chartHtml+mktLinks+addForm+'<div class="price-list">'+listItems+'</div>';
 }
@@ -1115,7 +1183,7 @@ function buildModalDreamConvert(card){
     '<p style="font-size:10px;color:#22c55e;font-weight:700;text-transform:uppercase;letter-spacing:.1em">구매 정보 입력</p>'+
     '<div class="img-upload" id="convert-img-upload" style="height:160px">'+imgEl+'<input id="convert-img-input" type="file" accept="image/*" style="display:none"/></div>'+
     '<div class="field"><label class="lbl">인증 코드 (새 코드)</label><input class="inp" id="convert-code" type="number" placeholder="실제 인증 코드 입력" value="'+esc(d.code||'')+'"/></div>'+
-    '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="convert-price" type="number" placeholder="0" value="'+esc(d.price||'')+'"/></div>'+
+    '<div class="field"><label class="lbl">매입 가격 (₩)</label><input class="inp" id="convert-price" type="text" inputmode="numeric" placeholder="0" value="'+esc(d.price||'')+'""/></div>'+
     '<div class="field"><label class="lbl">매입 날짜</label><input class="inp" id="convert-date" type="date" value="'+(d.date||today)+'" max="'+today+'"/></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">'+
       '<button class="btn-ghost" id="btn-cancel-convert" style="padding:12px">취소</button>'+
@@ -1129,7 +1197,7 @@ function buildModalSale(card,editing){
     var d=S.draft;
     return'<div class="sale-section"><div class="toggle-row"><div><p class="toggle-label">판매 완료</p><p class="toggle-sub">판매한 카드로 표시해요</p></div><button class="toggle-btn '+(d.sold?'on':'off')+'" id="btn-sold-toggle"><div class="toggle-knob"></div></button></div>'+
       (d.sold?'<div class="field"><label class="lbl">판매 날짜</label><input class="inp" id="d-sale-date" type="date" value="'+esc(d.saleDate||'')+'"/></div>'+
-        '<div class="field"><label class="lbl">판매 가격 (₩)</label><input class="inp" id="d-sale-price" type="number" value="'+esc(String(d.salePrice||''))+'"/></div>':'')+
+        '<div class="field"><label class="lbl">판매 가격 (₩)</label><input class="inp" id="d-sale-price" type="text" inputmode="numeric" value="'+(d.salePrice?toComma(d.salePrice):'')+'""/></div>':'')+
       '</div>';
   }
   // Unrealized gain for active cards (latest market price vs purchase price)
@@ -1168,8 +1236,7 @@ function closeModal(){
 }
 function renderModal(){
   var card=getCard();if(!card)return;
-  var d=S.editing&&S.draft?S.draft:card;
-  var mco=d.gradingCo||'PSA';
+  var d=S.editing&&S.draft?S.draft:card;  var mco=d.gradingCo||'PSA';
   var color=gradeColor(d.psaGrade,mco);
   var titleEl=document.getElementById('modal-title');
   titleEl.innerHTML=esc(card.name)+'<span class="copy-hint">⎘</span>';
@@ -1188,6 +1255,7 @@ function renderModal(){
   bindModalEvents(card);
 }
 function bindModalEvents(card){
+  bindAllCommaInputs();
   var q=function(id){return document.getElementById(id);};
   // Copy title
   document.getElementById('modal-title').addEventListener('click',function(){copyText(card.name).then(function(){var el=document.getElementById('modal-title');if(!el)return;el.innerHTML='복사됨! ✓';el.style.color='#34d399';setTimeout(function(){if(document.getElementById('modal-title'))renderModal();},1000);}).catch(function(){alert('클립보드 복사 미지원 브라우저입니다.');});});
@@ -1215,14 +1283,14 @@ function bindModalEvents(card){
     if(q('d-grade'))u.psaGrade=q('d-grade').value;
     u.psaCode=newCode;
     if(u.isDream){
-      if(q('d-target-price'))u.targetPrice=parseFloat(q('d-target-price').value)||0;
+      if(q('d-target-price'))u.targetPrice=fromComma(q('d-target-price').value);
     }else{
-      if(q('d-price'))u.purchasePrice=parseFloat(q('d-price').value)||0;
+      if(q('d-price'))u.purchasePrice=fromComma(q('d-price').value);
       if(q('d-date'))u.purchaseDate=q('d-date').value;
     }
     if(q('d-tags'))u.tags=parseTags(q('d-tags').value);
     if(q('d-reason'))u.purchaseReason=q('d-reason').value;
-    if(q('d-sale-date'))u.saleDate=q('d-sale-date').value;if(q('d-sale-price'))u.salePrice=parseFloat(q('d-sale-price').value)||0;
+    if(q('d-sale-date'))u.saleDate=q('d-sale-date').value;if(q('d-sale-price'))u.salePrice=fromComma(q('d-sale-price').value);
     S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});saveData();S.editing=false;S.draft=null;updateColBody();renderModal();
   });
   // Live PSA dupe check in edit mode
@@ -1239,8 +1307,29 @@ function bindModalEvents(card){
   });
   q('btn-change-img')&&q('btn-change-img').addEventListener('click',function(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;compressAndEdit(f,function(b64){S.draft.img=b64;renderModal();});};inp.click();});
   document.querySelectorAll('.chart-mode-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){S.chartMode=btn.dataset.mode;saveMeta();renderModal();});
+    btn.addEventListener('click',function(){
+      if(btn.dataset.mode){S.chartMode=btn.dataset.mode;saveMeta();}
+      if(btn.dataset.feetype){S.showCardOnly=(btn.dataset.feetype==='card');}
+      renderModal();
+    });
   });
+  // Live sum display for add form
+  window.updatePriceSum=function(){
+    var card2=fromComma(q('new-price-inp')?q('new-price-inp').value:'');
+    var ship=fromComma(q('new-price-ship')?q('new-price-ship').value:'');
+    var fee=fromComma(q('new-price-fee')?q('new-price-fee').value:'');
+    var el=q('new-price-sum');if(!el)return;
+    var total=card2+ship+fee;
+    el.textContent=(ship||fee)?'합산 '+fmtW(total):'';
+  };
+  window.updateEditPriceSum=function(){
+    var card2=fromComma(q('ep-val')?q('ep-val').value:'');
+    var ship=fromComma(q('ep-ship')?q('ep-ship').value:'');
+    var fee=fromComma(q('ep-fee')?q('ep-fee').value:'');
+    var el=q('ep-sum');if(!el)return;
+    var total=card2+ship+fee;
+    el.textContent=(ship||fee)?'합산 '+fmtW(total):'';
+  };
   // Custom URL save
   q('btn-save-custom-url')&&q('btn-save-custom-url').addEventListener('click',function(){
     var url=q('custom-url-inp')?q('custom-url-inp').value.trim():'';
@@ -1252,13 +1341,18 @@ function bindModalEvents(card){
   q('btn-open-add-price')&&q('btn-open-add-price').addEventListener('click',function(){S.addPrice=true;renderModal();setTimeout(function(){q('new-price-inp')&&q('new-price-inp').focus();},80);});
   q('btn-cancel-price')&&q('btn-cancel-price').addEventListener('click',function(){S.addPrice=false;renderModal();});
   function doAddPrice(){
-    var val=parseFloat(q('new-price-inp')?q('new-price-inp').value:0);
-    if(!val||isNaN(val)){alert('금액을 입력해주세요.');return;}
+    var cardP=fromComma(q('new-price-inp')?q('new-price-inp').value:0);
+    var ship=fromComma(q('new-price-ship')?q('new-price-ship').value:0);
+    var fee=fromComma(q('new-price-fee')?q('new-price-fee').value:0);
+    if(!cardP){alert('카드 가격을 입력해주세요.');return;}
+    var total=cardP+ship+fee;
     var dv=q('new-price-date')?q('new-price-date').value:'';
     var memo=q('new-price-memo')?q('new-price-memo').value.trim():'';
     var url=q('new-price-url')?q('new-price-url').value.trim():'';
     var date=dv?new Date(dv).toISOString():new Date().toISOString();
-    var entry={price:val,date:date};
+    var entry={price:total,cardPrice:cardP,date:date};
+    if(ship)entry.shipping=ship;
+    if(fee)entry.fee=fee;
     if(memo)entry.memo=memo;
     if(url)entry.sourceUrl=url;
     var u=JSON.parse(JSON.stringify(card));
@@ -1272,13 +1366,18 @@ function bindModalEvents(card){
   document.querySelectorAll('.del-price-btn').forEach(function(btn){btn.addEventListener('click',function(){if(!confirm('이 시세 기록을 삭제할까요?'))return;var idx=parseInt(btn.dataset.idx);var u=JSON.parse(JSON.stringify(card));u.priceHistory.splice(idx,1);S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});saveData();S.editPriceIdx=null;updateColBody();renderModal();});});
   q('btn-save-price')&&q('btn-save-price').addEventListener('click',function(){
     var idx=parseInt(q('btn-save-price').dataset.idx);
-    var val=parseFloat(q('ep-val')?q('ep-val').value:0);
-    if(!val||isNaN(val)){alert('올바른 금액을 입력해주세요.');return;}
+    var cardP=fromComma(q('ep-val')?q('ep-val').value:0);
+    if(!cardP){alert('올바른 카드 가격을 입력해주세요.');return;}
+    var ship=fromComma(q('ep-ship')?q('ep-ship').value:0);
+    var fee=fromComma(q('ep-fee')?q('ep-fee').value:0);
+    var total=cardP+ship+fee;
     var dv=q('ep-date')?q('ep-date').value:'';
     var memo=q('ep-memo')?q('ep-memo').value.trim():'';
     var url=q('ep-url')?q('ep-url').value.trim():'';
     var u=JSON.parse(JSON.stringify(card));
-    var entry={price:val,date:dv?new Date(dv).toISOString():card.priceHistory[idx].date};
+    var entry={price:total,cardPrice:cardP,date:dv?new Date(dv).toISOString():card.priceHistory[idx].date};
+    if(ship)entry.shipping=ship;
+    if(fee)entry.fee=fee;
     if(memo)entry.memo=memo;
     if(url)entry.sourceUrl=url;
     u.priceHistory[idx]=entry;
@@ -1303,7 +1402,7 @@ function bindModalEvents(card){
   });
   q('btn-confirm-convert')&&q('btn-confirm-convert').addEventListener('click',function(){
     var code=q('convert-code')?q('convert-code').value.trim():'';
-    var price=parseFloat(q('convert-price')?q('convert-price').value:0)||0;
+    var price=fromComma(q('convert-price')?q('convert-price').value:'');
     var date=q('convert-date')?q('convert-date').value:new Date().toISOString().slice(0,10);
     // Check code dupe in owned collection (temporarily set dreamView=false for check)
     if(code){var prevDV=S.dreamView;S.dreamView=false;var dupe=findPsaDupe(code,card.id,card.gradingCo||'PSA');S.dreamView=prevDV;if(dupe){if(!confirm('⚠️ 같은 코드('+code+')가 내 컬렉션에 이미 있어요.\n('+dupe.name+')\n그래도 추가할까요?'))return;}}
@@ -1332,6 +1431,7 @@ function renderContent(){
   if(S.tab==='collection'){var si=document.getElementById('search-inp');si&&si.addEventListener('input',function(){S.search=this.value;updateColBody();});bindColBodyEvents();}
   else if(S.tab==='lookup'){bindLookup();}
   else{bindAddForm();}
+  bindAllCommaInputs();
 }
 
 function buildLookupHTML(){
@@ -1430,8 +1530,8 @@ function updateLookupPartial(){
       readyEl.innerHTML='<div style="background:#0f2a1a;border:1px solid #166534;border-radius:14px;padding:14px">'+
         '<p style="font-size:12px;color:#34d399;font-weight:700;margin-bottom:10px">등록 방식 선택</p>'+
         '<div style="display:flex;flex-direction:column;gap:8px">'+
-          '<button class="btn-gold" id="btn-lookup-to-dream" style="background:#a78bfa;padding:12px;font-size:13px;font-weight:700">⭐ 드림카드로 등록하기</button>'+
-          '<button class="btn-ghost" id="btn-lookup-to-collection" style="padding:12px;font-size:13px">📦 내 컬렉션에 바로 추가하기</button>'+
+          '<button id="btn-lk-dream" style="background:#a78bfa;padding:12px;font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;color:#000">⭐ 드림카드로 등록하기</button>'+
+          '<button id="btn-lk-col" style="background:#111827;border:1px solid #1f2937;padding:12px;font-size:13px;border-radius:12px;cursor:pointer;color:#9ca3af">📦 내 컬렉션에 바로 추가하기</button>'+
         '</div></div>';
       bindLookupButtons();
     }else{readyEl.innerHTML='';}
@@ -1440,12 +1540,14 @@ function updateLookupPartial(){
 
 function bindLookupButtons(){
   var L=S.lookup;
-  document.getElementById('btn-lookup-to-dream')&&document.getElementById('btn-lookup-to-dream').addEventListener('click',function(){
+  var toDream=document.getElementById('btn-lookup-to-dream')||document.getElementById('btn-lk-dream');
+  var toCol=document.getElementById('btn-lookup-to-collection')||document.getElementById('btn-lk-col');
+  toDream&&toDream.addEventListener('click',function(){
     S.dreamView=true;saveMeta();
     S.form={name:L.name||'',img:null,reason:'',price:'',code:L.code,grade:L.grade,gradingCo:L.co,tags:'',purchaseDate:'',targetPrice:''};
     S.tab='add';renderContent();
   });
-  document.getElementById('btn-lookup-to-collection')&&document.getElementById('btn-lookup-to-collection').addEventListener('click',function(){
+  toCol&&toCol.addEventListener('click',function(){
     S.dreamView=false;saveMeta();
     S.form={name:L.name||'',img:null,reason:'',price:'',code:L.code,grade:L.grade,gradingCo:L.co,tags:'',purchaseDate:'',targetPrice:''};
     S.tab='add';renderContent();
