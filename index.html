@@ -302,6 +302,7 @@ textarea.inp{resize:none;}
   <main id="content"></main>
   <nav id="bottom-nav">
     <button class="nav-btn active" id="nav-collection" data-tab="collection"><span class="nav-icon">📦</span><span class="nav-label">컬렉션</span><span class="nav-bar"></span></button>
+    <button class="nav-btn" id="nav-lookup" data-tab="lookup"><span class="nav-icon">🔍</span><span class="nav-label">카드 검색</span><span class="nav-bar"></span></button>
     <button class="nav-btn" id="nav-add" data-tab="add">
       <span style="font-size:28px;color:#fff;line-height:1;font-weight:200;opacity:.9">+</span>
       <span class="nav-label">카드 추가</span>
@@ -441,6 +442,29 @@ var GRADES_BY_CO={
     {v:'4',   label:'BRG 4 — Fair',             short:'FR',   num:4},
     {v:'3',   label:'BRG 3 — Poor',             short:'PR',   num:3},
     {v:'RAW', label:'RAW (미채점)',               short:'RAW',  num:-1}
+  ],
+  CGC:[
+    {v:'10',  label:'CGC 10 — Pristine',         short:'PRIS', num:10},
+    {v:'9.5', label:'CGC 9.5 — Gem Mint+',       short:'GM+',  num:9.5},
+    {v:'9',   label:'CGC 9 — Mint',              short:'MINT', num:9},
+    {v:'8.5', label:'CGC 8.5 — Near Mint/Mint+', short:'NM+',  num:8.5},
+    {v:'8',   label:'CGC 8 — Near Mint/Mint',    short:'NM-MT',num:8},
+    {v:'7.5', label:'CGC 7.5 — Near Mint+',      short:'NM+',  num:7.5},
+    {v:'7',   label:'CGC 7 — Near Mint',         short:'NM',   num:7},
+    {v:'6.5', label:'CGC 6.5 — Fine/Near Mint+', short:'FN+',  num:6.5},
+    {v:'6',   label:'CGC 6 — Fine/Near Mint',    short:'FN-NM',num:6},
+    {v:'5.5', label:'CGC 5.5 — Fine+',           short:'FN+',  num:5.5},
+    {v:'5',   label:'CGC 5 — Fine',              short:'FN',   num:5},
+    {v:'4.5', label:'CGC 4.5 — Very Good/Fine+', short:'VG+',  num:4.5},
+    {v:'4',   label:'CGC 4 — Very Good/Fine',    short:'VG-FN',num:4},
+    {v:'3.5', label:'CGC 3.5 — Very Good+',      short:'VG+',  num:3.5},
+    {v:'3',   label:'CGC 3 — Very Good',         short:'VG',   num:3},
+    {v:'2.5', label:'CGC 2.5 — Good+',           short:'GD+',  num:2.5},
+    {v:'2',   label:'CGC 2 — Good',              short:'GD',   num:2},
+    {v:'1.5', label:'CGC 1.5 — Fair',            short:'FR',   num:1.5},
+    {v:'1',   label:'CGC 1 — Poor',              short:'PR',   num:1},
+    {v:'A',   label:'CGC A — Authentic',         short:'AUTH', num:0.5},
+    {v:'RAW', label:'RAW (미채점)',               short:'RAW',  num:-1}
   ]
 };
 // Keep GRADES as PSA for backward compat
@@ -454,11 +478,13 @@ function certUrl(card){
   var co=card.gradingCo||'PSA';var code=card.psaCode||'';if(!code)return null;
   if(co==='BGS')return'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+code;
   if(co==='BRG')return'https://break.co.kr/certification/'+code;
+  if(co==='CGC')return'https://www.cgccards.com/certlookup/'+code+'/';
   return'https://www.psacard.com/cert/'+code+'/psa';
 }
 function certLabel(co){
   if(co==='BGS')return'BGS 인증서 확인';
   if(co==='BRG')return'BRG 인증서 확인';
+  if(co==='CGC')return'CGC 인증서 확인';
   return'PSA 인증서 확인';
 }
 
@@ -649,7 +675,7 @@ function gradeColor(v,co){
   if(v==='10BL')return'#e040fb';// BGS Black Label - special purple
   if(v==='A')return'#a78bfa';
   var n=parseFloat(v);
-  if(n===10)return co==='BGS'?'#22d3ee':co==='BRG'?'#f472b6':'#f59e0b';
+  if(n===10)return co==='BGS'?'#22d3ee':co==='BRG'?'#f472b6':co==='CGC'?'#3b82f6':'#f59e0b';
   if(n>=9)return'#34d399';if(n>=7)return'#60a5fa';if(n>=5)return'#c084fc';return'#fb7185';
 }
 function ebayUrl(card){return'https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''))+'&LH_Sold=1&LH_Complete=1';}
@@ -930,13 +956,13 @@ function buildAddFormHTML(){
   // Cert link based on company
   var certPreview='';
   if(f.code&&f.code.trim()){
-    var cl=co==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+f.code:co==='BRG'?'https://break.co.kr/certification/'+f.code:'https://www.psacard.com/cert/'+f.code+'/psa';
+    var cl=co==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+f.code:co==='BRG'?'https://break.co.kr/certification/'+f.code:co==='CGC'?'https://www.cgccards.com/certlookup/'+f.code+'/':'https://www.psacard.com/cert/'+f.code+'/psa';
     certPreview='<a href="'+esc(cl)+'" target="_blank" class="psa-preview"><span>🔗</span><span>'+esc(cl.replace('https://',''))+'</span></a>';
   }
   var dupeWarn='';
   if(f.code&&f.code.trim()){var dupe=findPsaDupe(f.code,null,f.gradingCo||'PSA');if(dupe){dupeWarn='<div class="dupe-warn"><span>⚠️</span><p>'+esc(dupe.gradingCo||'PSA')+' 코드 '+esc(f.code)+' 는 이미 등록된 카드예요.<br/><strong>'+esc(dupe.name)+'</strong>'+(dupe.psaGrade?' ('+esc(dupe.gradingCo||'PSA')+' '+esc(dupe.psaGrade)+')':'')+'</p></div>';}}
   var tagChips='';var tags2=parseTags(f.tags);if(tags2.length)tagChips='<div class="tag-chips">'+tags2.map(function(t){return'<span class="tag-chip">'+esc(t)+'</span>';}).join('')+'</div>';
-  var coOpts=['PSA','BGS','BRG'].map(function(c){return'<option value="'+c+'"'+(co===c?' selected':'')+'>'+c+(c==='BGS'?' (Beckett)':c==='BRG'?' (Break)':'')+'</option>';}).join('');
+  var coOpts=['PSA','BGS','BRG','CGC'].map(function(c){return'<option value="'+c+'"'+(co===c?' selected':'')+'>'+c+(c==='BGS'?' (Beckett)':c==='BRG'?' (Break)':c==='CGC'?' (CGC)':'')+'</option>';}).join('');
   var today=new Date().toISOString().slice(0,10);
   var isDream=S.dreamView;
   var formTitle=isDream?'⭐ 드림카드 등록':'New Card';
@@ -971,7 +997,7 @@ function buildModalInfo(card,editing){
     var d=S.draft;
     var dco=d.gradingCo||'PSA';
     var gradeOpts2=getGrades(dco).map(function(g){return'<option value="'+g.v+'"'+(d.psaGrade===g.v?' selected':'')+'>'+esc(g.label)+'</option>';}).join('');
-    var dcoOpts=['PSA','BGS','BRG'].map(function(c){return'<option value="'+c+'"'+(dco===c?' selected':'')+'>'+c+(c==='BGS'?' (Beckett)':c==='BRG'?' (Break)':'')+'</option>';}).join('');
+    var dcoOpts=['PSA','BGS','BRG','CGC'].map(function(c){return'<option value="'+c+'"'+(dco===c?' selected':'')+'>'+c+(c==='BGS'?' (Beckett)':c==='BRG'?' (Break)':c==='CGC'?' (CGC)':'')+'</option>';}).join('');
     var tagStr=Array.isArray(d.tags)?d.tags.join(', '):'';
     return'<div class="modal-edit-fields"><div class="field"><label class="lbl">카드 이름</label><input class="inp" id="d-name" value="'+esc(d.name||'')+'"/></div>'+
       '<div class="grid2">'+
@@ -1310,12 +1336,167 @@ function bindModalEvents(card){
 
 // ─── Content Render ───────────────────────────────────────────────────────────
 function renderContent(){
-  S.form=S.form||{name:'',img:null,reason:'',price:'',code:'',grade:'',tags:'',purchaseDate:''};
+  S.form=S.form||{name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};
+  if(!S.lookup)S.lookup={co:'PSA',code:'',grade:'',name:'',certUrl:'',ready:false};
   var content=document.getElementById('content');
-  content.innerHTML=S.tab==='collection'?buildCollectionHTML():buildAddFormHTML();
+  content.innerHTML=S.tab==='collection'?buildCollectionHTML():S.tab==='lookup'?buildLookupHTML():buildAddFormHTML();
   document.querySelectorAll('.nav-btn').forEach(function(btn){btn.classList.toggle('active',btn.dataset.tab===S.tab);});
   if(S.tab==='collection'){var si=document.getElementById('search-inp');si&&si.addEventListener('input',function(){S.search=this.value;updateColBody();});bindColBodyEvents();}
+  else if(S.tab==='lookup'){bindLookup();}
   else{bindAddForm();}
+}
+
+function buildLookupHTML(){
+  var L=S.lookup;
+  var coOpts=['PSA','BGS','BRG','CGC'].map(function(c){
+    return'<option value="'+c+'"'+(L.co===c?' selected':'')+'>'+c+'</option>';
+  }).join('');
+  var gradeOpts=getGrades(L.co).map(function(g){
+    return'<option value="'+g.v+'"'+(L.grade===g.v?' selected':'')+'>'+esc(g.label)+'</option>';
+  }).join('');
+  // Cert link
+  var certLink='';
+  if(L.code.trim()){
+    var co2=L.co,cd=L.code.trim();
+    var certU=co2==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+cd
+      :co2==='BRG'?'https://break.co.kr/certification/'+cd
+      :co2==='CGC'?'https://www.cgccards.com/certlookup/'+cd+'/'
+      :'https://www.psacard.com/cert/'+cd+'/psa';
+    certLink='<a href="'+esc(certU)+'" target="_blank" class="psa-preview" style="margin-bottom:10px"><span>🔗</span><span>'+esc(certU.replace('https://','').slice(0,50))+'</span></a>';
+  }
+  // Search buttons — shown when name is filled
+  var searchBtns='';
+  if(L.name&&L.name.trim()){
+    var q=encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''));
+    var qEbay=encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''))+encodeURIComponent(' PSA');
+    searchBtns='<div style="margin-bottom:14px">'+
+      '<p style="font-size:10px;color:#6b7280;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">시세 검색</p>'+
+      '<div class="market-links">'+
+        '<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''))+'&LH_Sold=1&LH_Complete=1&_sop=13" target="_blank" class="market-btn">🛒 eBay</a>'+
+        '<a href="https://kream.co.kr/search?keyword='+q+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
+        '<a href="https://jp.mercari.com/search?keyword='+q+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
+        '<a href="https://www.google.com/search?q='+q+'%20%EC%8B%9C%EC%84%B8" target="_blank" class="market-btn">🔍 Google</a>'+
+      '</div>'+
+    '</div>';
+  }
+  // Ready section
+  var hasCode=L.code.trim().length>0;
+  var hasGrade=L.grade.length>0;
+  var readySection=(hasCode||hasGrade)?
+    '<div style="background:#0f2a1a;border:1px solid #166534;border-radius:14px;padding:14px;margin-top:4px">'+
+      '<p style="font-size:12px;color:#34d399;font-weight:700;margin-bottom:10px">등록 방식 선택</p>'+
+      '<div style="display:flex;flex-direction:column;gap:8px">'+
+        '<button class="btn-gold" id="btn-lookup-to-dream" style="background:#a78bfa;padding:12px;font-size:13px;font-weight:700">⭐ 드림카드로 등록하기</button>'+
+        '<button class="btn-ghost" id="btn-lookup-to-collection" style="padding:12px;font-size:13px">📦 내 컬렉션에 바로 추가하기</button>'+
+      '</div>'+
+    '</div>':'';
+  return'<div class="form-wrap">'+
+    '<p class="form-title" style="margin-bottom:4px">🔍 카드 검색 & 확인</p>'+
+    '<p style="font-size:11px;color:#6b7280;margin-bottom:16px;line-height:1.5">코드로 인증서 확인 → 이름 입력하면 시세 검색 → 드림카드 또는 컬렉션에 등록</p>'+
+    '<div class="field"><label class="lbl">카드 이름 (선택)</label><input class="inp" id="lk-name" type="text" placeholder="예: 리자몽 EX holo" value="'+esc(L.name||'')+'"/></div>'+
+    '<div class="grid2">'+
+      '<div class="field"><label class="lbl">그레이딩사</label><select class="inp" id="lk-co" style="-webkit-appearance:none">'+coOpts+'</select></div>'+
+      '<div class="field"><label class="lbl">등급</label><select class="inp" id="lk-grade" style="-webkit-appearance:none"><option value="">선택</option>'+gradeOpts+'</select></div>'+
+    '</div>'+
+    '<div class="field"><label class="lbl">인증 코드 (선택)</label><input class="inp" id="lk-code" type="number" placeholder="코드 번호 입력" value="'+esc(L.code)+'"/></div>'+
+    certLink+
+    searchBtns+
+    readySection+
+    '</div>';
+}
+
+function updateLookupPartial(){
+  // Partial update — only refresh dynamic sections without touching focused inputs
+  var L=S.lookup;
+  // Update cert link
+  var certEl=document.querySelector('#lk-cert-wrap');
+  if(certEl){
+    if(L.code.trim()){
+      var cd=L.code.trim(),co2=L.co;
+      var certU=co2==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+cd
+        :co2==='BRG'?'https://break.co.kr/certification/'+cd
+        :co2==='CGC'?'https://www.cgccards.com/certlookup/'+cd+'/'
+        :'https://www.psacard.com/cert/'+cd+'/psa';
+      certEl.innerHTML='<a href="'+esc(certU)+'" target="_blank" class="psa-preview"><span>🔗</span><span>'+esc(certU.replace('https://','').slice(0,50))+'</span></a>';
+    }else{certEl.innerHTML='';}
+  }
+  // Update search buttons
+  var searchEl=document.querySelector('#lk-search-wrap');
+  if(searchEl){
+    if(L.name&&L.name.trim()){
+      var q=encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''));
+      searchEl.innerHTML='<p style="font-size:10px;color:#6b7280;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">시세 검색</p>'+
+        '<div class="market-links">'+
+          '<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''))+'&LH_Sold=1&LH_Complete=1&_sop=13" target="_blank" class="market-btn">🛒 eBay</a>'+
+          '<a href="https://kream.co.kr/search?keyword='+q+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
+          '<a href="https://jp.mercari.com/search?keyword='+q+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
+          '<a href="https://www.google.com/search?q='+q+'%20%EC%8B%9C%EC%84%B8" target="_blank" class="market-btn">🔍 Google</a>'+
+        '</div>';
+    }else{searchEl.innerHTML='';}
+  }
+  // Update ready section
+  var readyEl=document.querySelector('#lk-ready-wrap');
+  if(readyEl){
+    var hasCode=L.code.trim().length>0,hasGrade=L.grade.length>0;
+    if(hasCode||hasGrade){
+      readyEl.innerHTML='<div style="background:#0f2a1a;border:1px solid #166534;border-radius:14px;padding:14px">'+
+        '<p style="font-size:12px;color:#34d399;font-weight:700;margin-bottom:10px">등록 방식 선택</p>'+
+        '<div style="display:flex;flex-direction:column;gap:8px">'+
+          '<button class="btn-gold" id="btn-lookup-to-dream" style="background:#a78bfa;padding:12px;font-size:13px;font-weight:700">⭐ 드림카드로 등록하기</button>'+
+          '<button class="btn-ghost" id="btn-lookup-to-collection" style="padding:12px;font-size:13px">📦 내 컬렉션에 바로 추가하기</button>'+
+        '</div></div>';
+      bindLookupButtons();
+    }else{readyEl.innerHTML='';}
+  }
+}
+
+function bindLookupButtons(){
+  var L=S.lookup;
+  document.getElementById('btn-lookup-to-dream')&&document.getElementById('btn-lookup-to-dream').addEventListener('click',function(){
+    S.dreamView=true;saveMeta();
+    S.form={name:L.name||'',img:null,reason:'',price:'',code:L.code,grade:L.grade,gradingCo:L.co,tags:'',purchaseDate:'',targetPrice:''};
+    S.tab='add';renderContent();
+  });
+  document.getElementById('btn-lookup-to-collection')&&document.getElementById('btn-lookup-to-collection').addEventListener('click',function(){
+    S.dreamView=false;saveMeta();
+    S.form={name:L.name||'',img:null,reason:'',price:'',code:L.code,grade:L.grade,gradingCo:L.co,tags:'',purchaseDate:'',targetPrice:''};
+    S.tab='add';renderContent();
+  });
+}
+
+function bindLookup(){
+  var L=S.lookup;
+  // Wrap dynamic sections for partial update
+  // Insert wrapper divs after initial render
+  var certPrev=document.querySelector('.psa-preview');
+  if(certPrev){var cw=document.createElement('div');cw.id='lk-cert-wrap';certPrev.parentNode.insertBefore(cw,certPrev);cw.appendChild(certPrev);}
+  else{var cw2=document.createElement('div');cw2.id='lk-cert-wrap';var codeInp=document.getElementById('lk-code');if(codeInp)codeInp.parentNode.insertBefore(cw2,codeInp.nextSibling);}
+  // Search buttons wrap
+  var existSearch=document.querySelector('.market-links');
+  var sw=document.createElement('div');sw.id='lk-search-wrap';sw.style.marginBottom='14px';
+  if(existSearch){var sp=existSearch.previousSibling;existSearch.parentNode.insertBefore(sw,existSearch);sw.appendChild(existSearch.previousSibling);sw.appendChild(existSearch);}
+  else{var fw=document.querySelector('.form-wrap');if(fw)fw.insertBefore(sw,fw.querySelector('#lk-ready-wrap')||null);}
+  // Ready wrap
+  var existReady=document.querySelector('#btn-lookup-to-dream');
+  var rw=document.createElement('div');rw.id='lk-ready-wrap';rw.style.marginTop='4px';
+  if(existReady){var parent=existReady.closest('div[style*="background:#0f2a1a"]');if(parent){parent.parentNode.insertBefore(rw,parent);rw.appendChild(parent);}}
+  else{var fw2=document.querySelector('.form-wrap');if(fw2)fw2.appendChild(rw);}
+
+  // Events - no renderContent, use partial update instead
+  var lkName=document.getElementById('lk-name');
+  lkName&&lkName.addEventListener('input',function(){L.name=this.value;updateLookupPartial();});
+  var lkCo=document.getElementById('lk-co');
+  lkCo&&lkCo.addEventListener('change',function(){
+    L.co=this.value;L.grade='';
+    var sel=document.getElementById('lk-grade');
+    if(sel)sel.innerHTML='<option value="">선택</option>'+getGrades(L.co).map(function(g){return'<option value="'+g.v+'">'+esc(g.label)+'</option>';}).join('');
+    updateLookupPartial();
+  });
+  var lkCode=document.getElementById('lk-code');
+  lkCode&&lkCode.addEventListener('input',function(){L.code=this.value;updateLookupPartial();});
+  var lkGrade=document.getElementById('lk-grade');
+  lkGrade&&lkGrade.addEventListener('change',function(){L.grade=this.value;updateLookupPartial();});
+  bindLookupButtons();
 }
 function bindAddForm(){
   var imgUpload=document.getElementById('img-upload'),imgInput=document.getElementById('img-input');
@@ -1337,7 +1518,7 @@ function bindAddForm(){
     var co=S.form.gradingCo||'PSA';
     var ex=document.querySelector('.psa-preview');
     if(!code.trim()){if(ex)ex.remove();return;}
-    var url=co==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+code:co==='BRG'?'https://break.co.kr/certification/'+code:'https://www.psacard.com/cert/'+code+'/psa';
+    var url=co==='BGS'?'https://www.beckett.com/grading/card-lookup?item_type=BGS&item_id='+code:co==='BRG'?'https://break.co.kr/certification/'+code:co==='CGC'?'https://www.cgccards.com/certlookup/'+code+'/':'https://www.psacard.com/cert/'+code+'/psa';
     var shortUrl=url.replace('https://','').substring(0,55);
     if(ex){ex.href=url;var sp=ex.querySelectorAll('span');if(sp[1])sp[1].textContent=shortUrl;}
     else{var el=document.createElement('a');el.className='psa-preview';el.href=url;el.target='_blank';el.innerHTML='<span>🔗</span><span>'+shortUrl+'</span>';var ci=document.getElementById('f-code');if(ci)ci.parentNode.insertBefore(el,ci.nextSibling);}
@@ -1444,6 +1625,7 @@ function addSampleCards(){
 
 // ─── Global events ────────────────────────────────────────────────────────────
 document.getElementById('nav-collection').addEventListener('click',function(){S.tab='collection';renderContent();});
+document.getElementById('nav-lookup').addEventListener('click',function(){S.tab='lookup';renderContent();});
 document.getElementById('nav-add').addEventListener('click',function(){S.tab='add';renderContent();});
 document.getElementById('modal-close-btn').addEventListener('click',function(){history.back();});
 document.getElementById('modal-bg').addEventListener('click',function(){history.back();});
