@@ -219,6 +219,17 @@ textarea.inp{resize:none;}
 .price-val{font-size:14px;font-weight:700;color:#f59e0b;}
 .price-memo-text{font-size:10px;color:#6b7280;margin-top:3px;font-style:italic;}
 .price-src-btn{display:inline-flex;align-items:center;gap:4px;background:#0d1117;border:1px solid #1f2937;border-radius:6px;padding:3px 8px;font-size:10px;color:#60a5fa;text-decoration:none;margin-top:4px;max-width:100%;overflow:hidden;}
+/* Google keyword modal */
+#gkw-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);align-items:flex-end;justify-content:center;}
+#gkw-overlay.open{display:flex;}
+.gkw-sheet{background:#111827;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:430px;}
+.gkw-title{font-size:13px;font-weight:700;color:#9ca3af;margin-bottom:12px;}
+.gkw-inp{width:100%;background:#0d1117;border:1px solid #374151;border-radius:12px;padding:12px 14px;font-size:14px;color:#fff;line-height:1.5;margin-bottom:10px;resize:none;min-height:60px;}
+.gkw-btns{display:flex;gap:8px;}
+.gkw-btn{flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:none;}
+.gkw-btn.copy{background:#1f2937;color:#9ca3af;border:1px solid #374151;}
+.gkw-btn.search{background:#f59e0b;color:#000;}
+@media(min-width:768px){#gkw-overlay{align-items:center;}.gkw-sheet{border-radius:20px;max-width:480px;}}
 .price-src-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
 .price-url-row{display:flex;gap:6px;align-items:center;margin-top:4px;}
 .price-url-inp{flex:1;}
@@ -579,7 +590,7 @@ async function loadFromGitHub(){
   if(result===null)return false;
   if(result==='NOT_FOUND')return true; // 파일 없음 → 로컬 데이터 그대로 유지
   S.cards=result;
-  try{localStorage.setItem('cards-v5',JSON.stringify(S.cards));}catch(e){}
+  saveData();
   return true;
 }
 
@@ -644,8 +655,52 @@ async function initGitHub(){
 }
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
-function saveData(){try{localStorage.setItem('cards-v5',JSON.stringify(S.cards));}catch(e){alert('저장 실패');}}
-function loadData(){try{S.cards=JSON.parse(localStorage.getItem('cards-v5')||'[]');}catch(e){S.cards=[];}}
+// ─── IndexedDB Storage ────────────────────────────────────────────────────────
+var _db=null;
+function openDB(){
+  if(_db)return Promise.resolve(_db);
+  return new Promise(function(resolve,reject){
+    var req=indexedDB.open('card-collection-db',1);
+    req.onupgradeneeded=function(e){
+      var db=e.target.result;
+      if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');
+    };
+    req.onsuccess=function(e){_db=e.target.result;resolve(_db);};
+    req.onerror=function(e){reject(e.target.error);};
+  });
+}
+function idbGet(key){
+  return openDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction('kv','readonly');
+      var req=tx.objectStore('kv').get(key);
+      req.onsuccess=function(){resolve(req.result);};
+      req.onerror=function(){reject(req.error);};
+    });
+  });
+}
+function idbSet(key,val){
+  return openDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction('kv','readwrite');
+      var req=tx.objectStore('kv').put(val,key);
+      req.onsuccess=function(){resolve();};
+      req.onerror=function(){reject(req.error);};
+    });
+  });
+}
+function saveData(){
+  idbSet('cards-v6',S.cards).catch(function(e){
+    console.error('IndexedDB 저장 실패',e);
+    // fallback to localStorage
+    try{localStorage.setItem('cards-v5',JSON.stringify(S.cards));}catch(le){
+      alert('저장 실패: 저장 공간이 부족해요. 내보내기로 백업 후 오래된 카드를 정리해주세요.');
+    }
+  });
+}
+function loadData(){
+  // will be called as async init - see initApp()
+}
 function saveMeta(){try{localStorage.setItem('cards-meta5',JSON.stringify({cols:S.cols,sortBy:S.sortBy,sortDir:S.sortDir,chartMode:S.chartMode,dreamView:S.dreamView}));}catch(e){}}
 function loadMeta(){try{var m=JSON.parse(localStorage.getItem('cards-meta5')||'{}');S.cols=m.cols||2;S.sortBy=m.sortBy||'createdAt';S.sortDir=m.sortDir||'desc';S.chartMode=m.chartMode||'labels';S.dreamView=!!m.dreamView;}catch(e){}}
 
@@ -706,7 +761,7 @@ function gradeColor(v,co){
   if(n>=9)return'#34d399';if(n>=7)return'#60a5fa';if(n>=5)return'#c084fc';return'#fb7185';
 }
 function ebayUrl(card){return'https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''))+'&LH_Sold=1&LH_Complete=1';}
-function googleUrl(card){return'https://www.google.com/search?q='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:'')+(card.psaGrade?'':' 카드')+' 시세 가격');}
+function googleUrl(card){return'https://www.google.com/search?q='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' '+(card.gradingCo||'PSA')+' '+card.psaGrade:''));}
 function kreamUrl(card){return'https://kream.co.kr/search?keyword='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''));}
 function mercariUrl(card){return'https://jp.mercari.com/search?keyword='+encodeURIComponent(card.name+(card.psaGrade&&card.psaGrade!=='RAW'?' PSA '+card.psaGrade:''));}
 function copyText(txt){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(txt);var el=document.createElement('textarea');el.value=txt;el.style.cssText='position:fixed;opacity:0;';document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);return Promise.resolve();}
@@ -1114,7 +1169,7 @@ function buildModalPrice(card){
     '<a href="'+esc(ebayUrl(card))+'" target="_blank" class="market-btn">🛒 eBay</a>'+
     '<a href="'+esc(kreamUrl(card))+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
     '<a href="'+esc(mercariUrl(card))+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
-    '<a href="'+esc(googleUrl(card))+'" target="_blank" class="market-btn">🔍 Google</a>'+
+    '<a href="'+esc(googleUrl(card))+'" target="_blank" class="market-btn" onclick="openGoogleKw(event,\''+esc(googleUrl(card).replace('https://www.google.com/search?q=','').replace(/%20/g,' ').replace(/\+/g,' '))+'\')">🔍 Google</a>'+
     (customUrl?'<a href="'+esc(customUrl)+'" target="_blank" class="market-btn" style="border-color:#7c3aed;color:#c4b5fd">🔗 직접</a>':'')+
     '</div>'+
     '<div id="custom-url-row" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'+
@@ -1463,7 +1518,7 @@ function buildLookupHTML(){
         '<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''))+'&LH_Sold=1&LH_Complete=1&_sop=13" target="_blank" class="market-btn">🛒 eBay</a>'+
         '<a href="https://kream.co.kr/search?keyword='+q+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
         '<a href="https://jp.mercari.com/search?keyword='+q+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
-        '<a href="https://www.google.com/search?q='+q+'%20%EC%8B%9C%EC%84%B8" target="_blank" class="market-btn">🔍 Google</a>'+
+        '<a href="https://www.google.com/search?q='+q+'" target="_blank" class="market-btn">🔍 Google</a>'+
       '</div>'+
     '</div>';
   }
@@ -1518,7 +1573,7 @@ function updateLookupPartial(){
           '<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(L.name.trim()+(L.grade&&L.grade!=='RAW'?' '+L.co+' '+L.grade:''))+'&LH_Sold=1&LH_Complete=1&_sop=13" target="_blank" class="market-btn">🛒 eBay</a>'+
           '<a href="https://kream.co.kr/search?keyword='+q+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
           '<a href="https://jp.mercari.com/search?keyword='+q+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
-          '<a href="https://www.google.com/search?q='+q+'%20%EC%8B%9C%EC%84%B8" target="_blank" class="market-btn">🔍 Google</a>'+
+          '<a href="https://www.google.com/search?q='+q+'" target="_blank" class="market-btn">🔍 Google</a>'+
         '</div>';
     }else{searchEl.innerHTML='';}
   }
@@ -2099,13 +2154,99 @@ function compressAndEdit(file,onDone){
   compress(file,function(b64){openImageEditor(b64,onDone);});
 }
 
-loadData();loadMeta();
-S.form={name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};
-setupPWA();
-renderContent();
-initGitHub();
+// ─── Google Keyword Modal ─────────────────────────────────────────────────────
+function openGoogleKw(e,keyword){
+  e.preventDefault();
+  var kw=decodeURIComponent(String(keyword||'')).replace(/\+/g,' ');
+  var inp=document.getElementById('gkw-inp');
+  if(inp)inp.value=kw;
+  var ov=document.getElementById('gkw-overlay');
+  if(ov)ov.classList.add('open');
+  setTimeout(function(){if(inp){inp.focus();inp.select();}},100);
+}
+document.addEventListener('DOMContentLoaded',function(){
+  var gkwClose=document.getElementById('gkw-close');
+  var gkwOverlay=document.getElementById('gkw-overlay');
+  var gkwCopy=document.getElementById('gkw-copy');
+  var gkwSearch=document.getElementById('gkw-search');
+  gkwClose&&gkwClose.addEventListener('click',function(){
+    gkwOverlay&&gkwOverlay.classList.remove('open');
+  });
+  gkwOverlay&&gkwOverlay.addEventListener('click',function(e){
+    if(e.target===this)this.classList.remove('open');
+  });
+  gkwCopy&&gkwCopy.addEventListener('click',function(){
+    var inp=document.getElementById('gkw-inp');if(!inp)return;
+    var sel=inp.value.substring(inp.selectionStart,inp.selectionEnd);
+    var text=sel||inp.value;
+    var btn=this;
+    (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject())
+      .then(function(){btn.textContent='✅ 복사됨';setTimeout(function(){btn.textContent='📋 복사';},1500);})
+      .catch(function(){inp.select();try{document.execCommand('copy');}catch(e){}});
+  });
+  gkwSearch&&gkwSearch.addEventListener('click',function(){
+    var inp=document.getElementById('gkw-inp');if(!inp)return;
+    var sel=inp.value.substring(inp.selectionStart,inp.selectionEnd);
+    var kw=(sel||inp.value).trim();
+    if(!kw)return;
+    window.open('https://www.google.com/search?q='+encodeURIComponent(kw),'_blank');
+    gkwOverlay&&gkwOverlay.classList.remove('open');
+  });
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function initApp(){
+  loadMeta();
+  S.form={name:'',img:null,reason:'',price:'',code:'',grade:'',gradingCo:'PSA',tags:'',purchaseDate:'',targetPrice:''};
+  try{
+    var saved=await idbGet('cards-v6');
+    if(saved&&Array.isArray(saved)){
+      S.cards=saved;
+    }else{
+      var legacy=localStorage.getItem('cards-v5');
+      if(legacy){
+        try{
+          S.cards=JSON.parse(legacy)||[];
+          await idbSet('cards-v6',S.cards);
+          localStorage.setItem('cards-v5-migrated','1');
+          console.log('✅ localStorage → IndexedDB 마이그레이션 완료 ('+S.cards.length+'장)');
+        }catch(e){S.cards=[];}
+      }else{S.cards=[];}
+    }
+  }catch(e){
+    console.warn('IndexedDB 사용 불가, localStorage 사용:', e);
+    try{S.cards=JSON.parse(localStorage.getItem('cards-v5')||'[]');}catch(le){S.cards=[];}
+  }
+  // 항상 렌더링 보장
+  try{setupPWA();}catch(e){}
+  try{
+    renderContent();
+  }catch(e){
+    console.error('renderContent 오류:',e);
+    var c=document.getElementById('content');
+    if(c)c.innerHTML='<div style="padding:24px;color:#f87171;font-size:13px;line-height:1.8">'+
+      '<p style="font-weight:700;margin-bottom:8px">⚠️ 화면 로딩 오류</p>'+
+      '<p>'+String(e)+'</p>'+
+      '<p style="margin-top:8px;color:#6b7280">카드 데이터: '+S.cards.length+'장 로드됨</p>'+
+      '</div>';
+  }
+  if(typeof initGitHub==='function'){try{initGitHub();}catch(e){}}
+}
+initApp();
 </script>
-  <!-- Image Editor -->
+  <!-- Google keyword modal -->
+  <div id="gkw-overlay">
+    <div class="gkw-sheet">
+      <p class="gkw-title">🔍 Google 검색 키워드 편집</p>
+      <p style="font-size:11px;color:#6b7280;margin-bottom:8px">드래그해서 원하는 부분만 선택 후 복사하거나, 수정하고 검색하세요</p>
+      <textarea class="gkw-inp" id="gkw-inp" rows="2"></textarea>
+      <div class="gkw-btns">
+        <button class="gkw-btn copy" id="gkw-copy">📋 복사</button>
+        <button class="gkw-btn" id="gkw-close" style="background:#1f2937;color:#9ca3af;border:1px solid #374151;flex:0.5">취소</button>
+        <button class="gkw-btn search" id="gkw-search">검색 →</button>
+      </div>
+    </div>
+  </div>
   <div id="img-editor-overlay">
     <div class="ie-header">
       <button class="ie-btn" id="ie-cancel" style="flex:none;padding:6px 14px;font-size:12px">취소</button>
@@ -2132,5 +2273,7 @@ initGitHub();
       </div>
     </div>
   </div>
+</body>
+
 </body>
 </html>
