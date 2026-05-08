@@ -1169,7 +1169,7 @@ function buildModalPrice(card){
     '<a href="'+esc(ebayUrl(card))+'" target="_blank" class="market-btn">🛒 eBay</a>'+
     '<a href="'+esc(kreamUrl(card))+'" target="_blank" class="market-btn">🇰🇷 KREAM</a>'+
     '<a href="'+esc(mercariUrl(card))+'" target="_blank" class="market-btn">🏪 메루카리</a>'+
-    '<a href="'+esc(googleUrl(card))+'" target="_blank" class="market-btn" onclick="openGoogleKw(event,\''+esc(googleUrl(card).replace('https://www.google.com/search?q=','').replace(/%20/g,' ').replace(/\+/g,' '))+'\')">🔍 Google</a>'+
+    '<a href="'+esc(googleUrl(card))+'" target="_blank" class="market-btn market-btn-google" data-kw="'+esc(decodeURIComponent(googleUrl(card).replace('https://www.google.com/search?q=','')).replace(/\+/g,' '))+'">🔍 Google</a>'+
     (customUrl?'<a href="'+esc(customUrl)+'" target="_blank" class="market-btn" style="border-color:#7c3aed;color:#c4b5fd">🔗 직접</a>':'')+
     '</div>'+
     '<div id="custom-url-row" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'+
@@ -1311,6 +1311,18 @@ function renderModal(){
 }
 function bindModalEvents(card){
   bindAllCommaInputs();
+  // Google keyword modal - event delegation
+  document.querySelectorAll('.market-btn-google').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      var kw=btn.dataset.kw||'';
+      var inp=document.getElementById('gkw-inp');
+      if(inp)inp.value=kw;
+      var ov=document.getElementById('gkw-overlay');
+      if(ov)ov.classList.add('open');
+      setTimeout(function(){if(inp){inp.focus();inp.select();}},100);
+    });
+  });
   var q=function(id){return document.getElementById(id);};
   // Copy title
   document.getElementById('modal-title').addEventListener('click',function(){copyText(card.name).then(function(){var el=document.getElementById('modal-title');if(!el)return;el.innerHTML='복사됨! ✓';el.style.color='#34d399';setTimeout(function(){if(document.getElementById('modal-title'))renderModal();},1000);}).catch(function(){alert('클립보드 복사 미지원 브라우저입니다.');});});
