@@ -1294,7 +1294,7 @@ function drawPopChart(history){
   var lbls=sorted.map(function(p){
     var x=px(p.date),y=py(p.pop);
     var anchor='middle';if(x<PL+10){anchor='start';}else if(x>W-10){anchor='end';}
-    return'<text x="'+x.toFixed(1)+'" y="'+Math.max(PT+8,y-5).toFixed(1)+'" text-anchor="'+anchor+'" fill="#93c5fd" font-size="8" font-weight="600">'+p.pop+'</text>';
+    return'<text x="'+x.toFixed(1)+'" y="'+Math.max(PT+8,y-5).toFixed(1)+'" text-anchor="'+anchor+'" fill="#93c5fd" font-size="8" font-weight="600">'+(p.pop>=1000?(p.pop/1000).toFixed(p.pop%1000?1:0)+'k':p.pop)+'</text>';
   }).join('');
   // X axis labels
   var xLbls='';
