@@ -301,7 +301,6 @@ textarea.inp{resize:none;}
       <div class="logo"><img src="https://toviworktest.github.io/card-collection/icon.png" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt=""/></div>
       <h1>카드 컬렉션</h1>
     </div>
-    <span id="gh-status" style="font-size:10px;color:#6b7280;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px"></span>
     <div class="hdr-right">
       <button class="btn-sm" id="btn-sync-header" title="GitHub 동기화">☁️</button>
       <button class="btn-sm" id="btn-export">내보내기</button>
@@ -310,6 +309,9 @@ textarea.inp{resize:none;}
       <input id="import-file-input" type="file" accept=".json" style="display:none"/>
     </div>
   </header>
+  <div id="gh-status-bar" style="display:none;padding:3px 16px;background:#070c14;border-bottom:1px solid #111827;">
+    <span id="gh-status" style="font-size:10px;color:#6b7280;display:block;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+  </div>
   <main id="content"></main>
   <nav id="bottom-nav">
     <button class="nav-btn active" id="nav-collection" data-tab="collection"><span class="nav-icon">📦</span><span class="nav-label">컬렉션</span><span class="nav-bar"></span></button>
@@ -519,11 +521,25 @@ function setGhSha(s){if(s)localStorage.setItem('gh-sha',s);else localStorage.rem
 
 function setGhStatus(type,msg){
   var el=document.getElementById('gh-status');
+  var bar=document.getElementById('gh-status-bar');
   if(!el)return;
   var map={ok:{icon:'☁️',color:'#34d399'},syncing:{icon:'🔄',color:'#f59e0b'},error:{icon:'⚠️',color:'#f87171'},none:{icon:'',color:'#6b7280'}};
   var t=map[type]||map.none;
-  el.textContent=(t.icon?t.icon+' ':'')+msg;
+  var text=(t.icon?t.icon+' ':'')+msg;
+  el.textContent=text;
   el.style.color=t.color;
+  if(bar){
+    if(type==='none'||!msg){
+      bar.style.display='none';
+    }else{
+      bar.style.display='block';
+      // Auto-hide ok status after 3 seconds
+      if(type==='ok'){
+        clearTimeout(bar._hideTimer);
+        bar._hideTimer=setTimeout(function(){bar.style.display='none';},3000);
+      }
+    }
+  }
 }
 
 function jsonToB64(obj){
