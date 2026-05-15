@@ -915,7 +915,7 @@ function drawChart(history,buyPrice,salePrice,isSold,mode,soldRefs,opts){
 }
 
 // ─── Filter & Sort ────────────────────────────────────────────────────────────
-var SORT_OPTIONS=[{v:'createdAt',label:'등록일'},{v:'purchaseDate',label:'매입일'},{v:'purchasePrice',label:'매입가'},{v:'marketPrice',label:'최근 시세'},{v:'psaGrade',label:'등급'}];
+var SORT_OPTIONS=[{v:'createdAt',label:'등록일'},{v:'purchaseDate',label:'매입일'},{v:'purchasePrice',label:'매입가'},{v:'marketPrice',label:'최근 시세'},{v:'psaGrade',label:'등급'},{v:'popCount',label:'POP 수'}];
 function getFiltered(){
   // Filter by current deck (dream or main)
   var cards=S.cards.filter(function(c){return!!c.isDream===S.dreamView;});
@@ -924,7 +924,7 @@ function getFiltered(){
     else if(S.filterSold==='sold')cards=cards.filter(function(c){return c.sold;});
   }
   if(S.search.trim()){var q=S.search.trim().toLowerCase();cards=cards.filter(function(c){return(c.name||'').toLowerCase().indexOf(q)>=0||(c.psaCode||'').indexOf(q)>=0||(c.psaGrade||'').toLowerCase().indexOf(q)>=0||(c.purchaseReason||'').toLowerCase().indexOf(q)>=0||((c.tags||[]).join(' ')).toLowerCase().indexOf(q)>=0;});}
-  cards.sort(function(a,b){var va,vb;if(S.sortBy==='purchasePrice'){va=a.purchasePrice||0;vb=b.purchasePrice||0;}else if(S.sortBy==='marketPrice'){va=getLatestPrice(a)||0;vb=getLatestPrice(b)||0;}else if(S.sortBy==='psaGrade'){va=gNum(a.psaGrade);vb=gNum(b.psaGrade);}else if(S.sortBy==='purchaseDate'){va=a.purchaseDate?new Date(a.purchaseDate).getTime():0;vb=b.purchaseDate?new Date(b.purchaseDate).getTime():0;}else{va=new Date(a.createdAt||0).getTime();vb=new Date(b.createdAt||0).getTime();}return S.sortDir==='asc'?va-vb:vb-va;});
+  cards.sort(function(a,b){var va,vb;if(S.sortBy==='purchasePrice'){va=a.purchasePrice||0;vb=b.purchasePrice||0;}else if(S.sortBy==='marketPrice'){va=getLatestPrice(a)||0;vb=getLatestPrice(b)||0;}else if(S.sortBy==='psaGrade'){va=gNum(a.psaGrade);vb=gNum(b.psaGrade);}else if(S.sortBy==='purchaseDate'){va=a.purchaseDate?new Date(a.purchaseDate).getTime():0;vb=b.purchaseDate?new Date(b.purchaseDate).getTime():0;}else if(S.sortBy==='popCount'){va=(a.popHistory&&a.popHistory.length)?a.popHistory.reduce(function(x,y){return new Date(x.date)>new Date(y.date)?x:y;}).pop:0;vb=(b.popHistory&&b.popHistory.length)?b.popHistory.reduce(function(x,y){return new Date(x.date)>new Date(y.date)?x:y;}).pop:0;}else{va=new Date(a.createdAt||0).getTime();vb=new Date(b.createdAt||0).getTime();}return S.sortDir==='asc'?va-vb:vb-va;});
   return cards;
 }
 
@@ -1475,7 +1475,7 @@ function bindModalEvents(card){
     var u=JSON.parse(JSON.stringify(card));
     u.popHistory=(card.popHistory||[]).concat([{pop:val,date:date}]);
     S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});
-    saveData();renderModal();
+    saveData();updateColBody();renderModal();
   });
   document.querySelectorAll('.del-pop-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
@@ -1486,7 +1486,7 @@ function bindModalEvents(card){
       var toRemove=sorted[idx];
       u.popHistory=(card.popHistory||[]).filter(function(p){return p!==toRemove&&!(p.pop===toRemove.pop&&p.date===toRemove.date);});
       S.cards=S.cards.map(function(c){return c.id===card.id?u:c;});
-      saveData();renderModal();
+      saveData();updateColBody();renderModal();
     });
   });
   document.querySelectorAll('.chart-mode-btn').forEach(function(btn){
